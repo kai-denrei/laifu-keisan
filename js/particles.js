@@ -372,6 +372,48 @@ function rebuildPanelParticles(playerId, newStr) {
   }
 }
 
+function drawBoundaryLines(ctx) {
+  const n = STATE.panels.length;
+  if (n < 2) return;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const cx = w / 2;
+  const cy = h / 2;
+  ctx.save();
+  ctx.strokeStyle = "rgba(160, 168, 184, 0.45)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (n === 2) {
+    ctx.moveTo(0, cy);
+    ctx.lineTo(w, cy);
+  } else if (n === 4) {
+    ctx.moveTo(0, cy);
+    ctx.lineTo(w, cy);
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, h);
+  } else {
+    // Radial: 3 or 5 wedges. Boundary angles (clockwise from south) at the
+    // half-angle between adjacent seat rotations.
+    for (let i = 0; i < n; i++) {
+      const angle = ((i + 0.5) * (360 / n) * Math.PI) / 180;
+      const dx = -Math.sin(angle);
+      const dy = Math.cos(angle);
+      // Smallest positive t to the viewport edge.
+      const cand = [];
+      if (dx > 1e-6) cand.push((w - cx) / dx);
+      else if (dx < -1e-6) cand.push((0 - cx) / dx);
+      if (dy > 1e-6) cand.push((h - cy) / dy);
+      else if (dy < -1e-6) cand.push((0 - cy) / dy);
+      const t = Math.min(...cand.filter((v) => v > 0));
+      if (!isFinite(t)) continue;
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + dx * t, cy + dy * t);
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 function loop(now) {
   if (!STATE.enabled) return;
   STATE.rafId = requestAnimationFrame(loop);
@@ -381,6 +423,12 @@ function loop(now) {
 
   const cfg = STATE.config;
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  // 1px grey player-boundary lines, drawn before particles so particles
+  // render over the seams. For 2P: horizontal across centre. For 4P: full
+  // cross. For 3P / 5P: radial spokes from centre to each wedge boundary
+  // (perimeter intersection at angle = (i + 0.5) * 360 / N from south).
+  drawBoundaryLines(ctx);
 
   const size = cfg.particleSize;
   const half = size / 2;
