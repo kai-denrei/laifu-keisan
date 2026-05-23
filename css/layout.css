@@ -712,3 +712,41 @@
 #dev-sliders[data-collapsed="1"] header {
   margin: 0;
 }
+
+/* === Skin pager (paginated skin selector in settings) === */
+.skin-pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.skin-pager .skin-choices {
+  display: flex;
+  gap: 4px;
+}
+.skin-pager .skin-choices button[data-page] {
+  display: none;
+}
+/* Show only the buttons matching the current pager page. */
+.skin-pager[data-page="0"] .skin-choices button[data-page="0"] { display: inline-flex; }
+.skin-pager[data-page="1"] .skin-choices button[data-page="1"] { display: inline-flex; }
+.skin-pager[data-page="2"] .skin-choices button[data-page="2"] { display: inline-flex; }
+.skin-pager[data-page="3"] .skin-choices button[data-page="3"] { display: inline-flex; }
+.skin-pager .skin-arrow {
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.skin-pager[data-page="0"] .skin-arrow[data-dir="-1"],
+.skin-pager[data-page="1"] .skin-arrow[data-dir="1"]:not([data-overflow]) {
+  visibility: hidden;
+}
+/* When more than 2 pages exist later, the [data-overflow] hint will keep the
+   right arrow visible. For now (2 pages), hide it on the last page. */

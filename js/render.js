@@ -176,11 +176,15 @@ export function renderShell(state, root) {
       </div>
       <div class="menu-row">
         <span class="menu-label">Skin</span>
-        <div class="menu-choices" data-choice-group="skin">
-          <button type="button" data-action="set-skin" data-value="pastel">Pastel</button>
-          <button type="button" data-action="set-skin" data-value="cyberpunk">Cyber</button>
-          <button type="button" data-action="set-skin" data-value="heroic-fantasy">Heroic</button>
-          <button type="button" data-action="set-skin" data-value="particles">Particles</button>
+        <div class="skin-pager" data-page="0" data-total-pages="2">
+          <button type="button" class="skin-arrow" data-action="skin-page" data-dir="-1" aria-label="Previous page">‹</button>
+          <div class="menu-choices skin-choices" data-choice-group="skin">
+            <button type="button" data-action="set-skin" data-value="pastel" data-page="0">Pastel</button>
+            <button type="button" data-action="set-skin" data-value="cyberpunk" data-page="0">Cyber</button>
+            <button type="button" data-action="set-skin" data-value="heroic-fantasy" data-page="1">Heroic</button>
+            <button type="button" data-action="set-skin" data-value="particles" data-page="1">Ryūshi</button>
+          </div>
+          <button type="button" class="skin-arrow" data-action="skin-page" data-dir="1" aria-label="Next page">›</button>
         </div>
       </div>
       <div class="menu-row">
@@ -538,6 +542,12 @@ export function renderMenu(state) {
   root.querySelectorAll('[data-choice-group="skin"] button').forEach(b => {
     b.dataset.active = (b.dataset.value === state.skin) ? "1" : "";
   });
+  // Make sure the page containing the active skin is the one shown.
+  const activeSkinBtn = root.querySelector(`[data-action="set-skin"][data-value="${state.skin}"]`);
+  const pager = root.querySelector(".skin-pager");
+  if (pager && activeSkinBtn) {
+    pager.dataset.page = activeSkinBtn.dataset.page || "0";
+  }
   root.querySelectorAll('[data-choice-group="history"] button').forEach(b => {
     const want = b.dataset.value === "on";
     b.dataset.active = (want === !!state.historyEnabled) ? "1" : "";

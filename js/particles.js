@@ -18,15 +18,20 @@
 //
 // Tunable via a config object; updateConfig() merges in slider changes.
 
+// Defaults per Gerald 2026-05-23: 300, 1, 0.2, 0.6, 110, 80, 740, 0.8.
+// flashDuration is now a "post-burst glow" — same player colour, brighter
+// alpha pulse — NOT a hue switch. Earlier defaults flashed green/red on
+// burst which read as the digit changing colour; player colour now stays
+// stable through the whole sequence.
 const DEFAULTS = {
-  particlesPerDigit: 90,
-  particleSize: 2,
-  driftAmp: 0.6,
-  seekStrength: 0.22,    // higher = faster snap to new target after burst
-  burstVelocity: 180,
-  burstLifetime: 220,    // fast explosion
-  flashDuration: 140,
-  burstFriction: 0.90,
+  particlesPerDigit: 300,
+  particleSize: 1,
+  driftAmp: 0.2,
+  seekStrength: 0.6,
+  burstVelocity: 110,
+  burstLifetime: 80,     // fast explosion
+  flashDuration: 740,    // post-burst glow length (same-colour, alpha pulse)
+  burstFriction: 0.8,
 };
 
 const STATE = {
@@ -114,8 +119,11 @@ export function refreshPanels() {
     const bbox = life.getBoundingClientRect();
     if (bbox.width < 8 || bbox.height < 8) return;
 
-    const inner = panel.querySelector(".panel-inner");
-    const rotationDeg = parseFloat(inner?.dataset.seatRotation || "0");
+    // seat-rotation lives on the .panel SECTION (set in render.js makePanel),
+    // not on .panel-inner. Reading the wrong element silently gave 0 rotation
+    // for every seat — particles rendered upright in screen-space regardless
+    // of player orientation. Fixed: read from panel.
+    const rotationDeg = parseFloat(panel.dataset.seatRotation || "0");
     const rotation = (rotationDeg * Math.PI) / 180;
 
     const cs = getComputedStyle(life);
@@ -293,15 +301,12 @@ function applyValueChange(playerId, sign, newStr) {
 
   const now = performance.now();
   const cfg = STATE.config;
-  const root = getComputedStyle(document.documentElement);
-  const flashColor =
-    (sign > 0
-      ? root.getPropertyValue("--accent-pos").trim()
-      : root.getPropertyValue("--accent-neg").trim()) || (sign > 0 ? "#39ff14" : "#ff1744");
 
   // Burst + retarget ONLY the changed-digit particles. The retarget is set
   // simultaneously with the burst — particles fly outward then seek the new
   // position; no setTimeout, no extra delay before re-ordering begins.
+  // The flash period uses the player's OWN colour (alpha pulse only), not a
+  // green/red hue switch — keeps each player's colour stable.
   const ctr = new Map();
   for (let i = 0; i < STATE.particles.length; i++) {
     const p = STATE.particles[i];
@@ -314,7 +319,6 @@ function applyValueChange(playerId, sign, newStr) {
     p.vy = Math.sin(ang) * sp;
     p.burstUntil = now + cfg.burstLifetime;
     p.flashUntil = now + cfg.flashDuration;
-    p.flashColor = flashColor;
 
     const slot = byDigit.get(p.digitIndex);
     if (slot && slot.length) {
@@ -337,8 +341,8 @@ function rebuildPanelParticles(playerId, newStr) {
   if (!lifeEl) return;
   const panelEl = lifeEl.closest(".panel");
   const bbox = lifeEl.getBoundingClientRect();
-  const inner = panelEl.querySelector(".panel-inner");
-  const rotationDeg = parseFloat(inner?.dataset.seatRotation || "0");
+  // seat-rotation is on the .panel section, not .panel-inner.
+  const rotationDeg = parseFloat(panelEl.dataset.seatRotation || "0");
   const rotation = (rotationDeg * Math.PI) / 180;
   const cs = getComputedStyle(lifeEl);
   const playerColor = readPlayerColor(panelEl);
@@ -410,7 +414,16 @@ function loop(now) {
       p.y += (p.ty - p.y) * cfg.seekStrength + (Math.random() - 0.5) * cfg.driftAmp;
     }
 
-    ctx.fillStyle = now < p.flashUntil ? p.flashColor : baseColor;
+    // Same-colour glow during flash window: drop a slightly larger,
+    // half-alpha rect behind the main particle. Player colour preserved.
+    ctx.fillStyle = baseColor;
+    if (now < p.flashUntil) {
+      const g = size + 2;
+      const hg = g / 2;
+      ctx.globalAlpha = 0.45;
+      ctx.fillRect(p.x - hg, p.y - hg, g, g);
+      ctx.globalAlpha = 1;
+    }
     ctx.fillRect(p.x - half, p.y - half, size, size);
   }
 }

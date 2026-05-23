@@ -300,6 +300,16 @@ export function bindInput(root, getState, onChange) {
         if (backdrop) backdrop.hidden = true;
         break;
       }
+      case "skin-page": {
+        const pager = t.closest(".skin-pager");
+        if (!pager) break;
+        const dir = parseInt(t.dataset.dir, 10) || 0;
+        const total = parseInt(pager.dataset.totalPages || "1", 10);
+        const cur = parseInt(pager.dataset.page || "0", 10);
+        const next = Math.max(0, Math.min(total - 1, cur + dir));
+        pager.dataset.page = String(next);
+        break;
+      }
       case "set-player-count": {
         const n = parseInt(t.dataset.value, 10);
         commitAll();
