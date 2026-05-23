@@ -164,34 +164,35 @@
 .panel-inner {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
   pointer-events: none; /* visuals only; zones absorb most taps. .life opts in. */
   transform: rotate(var(--seat-rotation, 0deg));
   transform-origin: center center;
   z-index: 3;
 }
 
-/* For RADIAL layouts, the panel-inner is viewport-sized but the WEDGE only
- * occupies a slice. The number, centered in panel-inner, lands at the wedge
- * vertex (viewport center). Push it along the rotated y-axis (toward the
- * player) so it sits inside the player's wedge. The translate is in the
- * panel-inner's local rotated frame, so each player's number ends up offset
- * toward their seat regardless of seat-rotation. */
+/* .life is centered explicitly via absolute positioning rather than relying
+ * on grid/flex placement — removes any flow ambiguity introduced by the
+ * absolute-positioned siblings (.delta, .history-btn). For RADIAL layouts
+ * .life is then offset along the rotated y-axis (toward the player). The
+ * translateY value must stay below the SHORTEST radial distance from
+ * viewport center to perimeter (≈ 50vmin in portrait), otherwise the
+ * side-facing wedges clip the number off-screen. */
+.life {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 #board[data-radial="1"] .panel-inner .life {
-  /* Push the number out along the rotated y-axis (toward the player's edge).
-   * Different push-distance per count: 3P wedges are 120° wide so the wedge
-   * extends further along the bisector before clipping by the viewport edge;
-   * 5P wedges are 72° wide and clip sooner, so push less. */
-  transform: translateY(30vmin);
+  transform: translate(-50%, -50%) translateY(32vmin);
 }
 #board[data-player-count="5"] .panel-inner .life {
-  transform: translateY(24vmin);
+  transform: translate(-50%, -50%) translateY(28vmin);
 }
 #board[data-radial="1"] .panel-inner .delta {
-  /* Keep delta near the number — in rotated frame. */
+  /* Delta sits inward of the number (toward viewport center). */
   top: auto;
-  bottom: calc(50% - 42vmin);
+  bottom: calc(50% - 18vmin);
 }
 
 /* Radial zones (siblings of panel-inner inside .panel) need pointer events. */
@@ -199,10 +200,11 @@
   pointer-events: auto;
 }
 
-/* The big number — sits above the +/− zones; .life is a button but it's a no-op now. */
+/* The big number — visual only (it was a button in v1 for tap-to-peek-log
+ * but the "…" button replaced that; we keep the <button> element for
+ * accessibility but it's pointer-events:none and visually transparent). */
 .life {
   pointer-events: none;
-  position: relative;
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--player-fg, var(--text));
@@ -214,6 +216,7 @@
   background: transparent;
   padding: 0.2em 0.3em;
   border-radius: 12px;
+  border: 0;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   z-index: 3;
@@ -251,20 +254,23 @@
 .panel[data-delta-sign="plus"] .delta { color: var(--accent-pos); border-color: var(--accent-pos); }
 .panel[data-delta-sign="minus"] .delta { color: var(--accent-neg); border-color: var(--accent-neg); }
 
-/* === Per-player history "…" button === */
-/* Placement: bottom-left in the player's reading frame (i.e. bottom-left of
- * .panel-inner natural coords). Picked over bottom-right to avoid colliding
- * with the cache-bust badge fixed at the screen's bottom-right. */
+/* === Per-player history "…" button ===
+ * Placement: bottom-CENTER in the player's reading frame (= as far from the
+ * table center / opposing-player gutter as possible, near the player's near
+ * edge). This avoids accidental presses since the +/- tap zones cluster
+ * around the number, NOT at the player's far perimeter edge.
+ */
 .history-btn {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--player-fg, var(--text)) 18%, transparent);
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--player-fg, var(--text)) 14%, transparent);
   color: var(--player-fg, var(--text));
-  border: 1px solid color-mix(in srgb, var(--player-fg, var(--text)) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--player-fg, var(--text)) 28%, transparent);
   font-family: var(--font-ui);
   font-size: 22px;
   line-height: 1;
@@ -274,21 +280,25 @@
   justify-content: center;
   pointer-events: auto;
   z-index: 5;
+  letter-spacing: 0.1em;
 }
 .history-btn[hidden] { display: none !important; }
 
-/* Radial layouts: panel-inner is viewport-sized, so the corner positioning
- * above would land outside the wedge. Anchor relative to the center, offset
- * toward the player's lower-left in their reading frame. The offset is small
- * enough to stay inside the wedge for both 3P (120°) and 5P (72°). */
+/* Radial layouts: panel-inner is viewport-sized, so the bottom-edge offset
+ * above would land outside the wedge. Anchor relative to viewport center
+ * and push along the rotated y-axis (toward the player). Distance picked to
+ * sit BELOW the centroid-positioned number, near the player's near edge but
+ * still inside both 3P (120°) and 5P (72°) wedges. */
 .panel[data-radial="1"] .history-btn {
   bottom: auto;
   left: 50%;
   top: 50%;
   right: auto;
-  /* Center the button at (panel-inner-center) + (-6vmin, +10vmin), which in
-   * the rotated player frame lands at the player's lower-left of the number. */
-  transform: translate(-50%, -50%) translate(-6vmin, 10vmin);
+  transform: translate(-50%, -50%) translateY(72vmin);
+}
+#board[data-player-count="5"] .panel[data-radial="1"] .history-btn {
+  /* 5P wedges are narrower; the perimeter is closer along the bisector. */
+  transform: translate(-50%, -50%) translateY(64vmin);
 }
 
 /* === Menu pill === */

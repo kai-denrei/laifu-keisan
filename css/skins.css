@@ -67,14 +67,6 @@
   mix-blend-mode: multiply;
   z-index: 0;
 }
-[data-skin="heroic-fantasy"] .panel > .panel-inner {
-  position: relative;
-  z-index: 1;
-}
-[data-skin="heroic-fantasy"] .panel > .zone {
-  position: relative;
-  z-index: 1;
-}
 [data-skin="heroic-fantasy"] .life {
   font-weight: 700;
   letter-spacing: 0.015em;
