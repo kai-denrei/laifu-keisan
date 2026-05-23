@@ -164,6 +164,7 @@ export function renderShell(state, root) {
   menu.innerHTML = `
     <button class="menu-toggle" type="button" data-action="menu-toggle" aria-label="Menu">☰</button>
     <div class="menu-popover" hidden role="dialog" aria-label="Settings">
+      <button class="menu-close" type="button" data-action="menu-close" aria-label="Close settings">×</button>
       <div class="menu-row">
         <span class="menu-label">Players</span>
         <div class="menu-choices" data-choice-group="player-count">
@@ -224,6 +225,16 @@ export function renderShell(state, root) {
     }
   }
   root.appendChild(menu);
+
+  // Backdrop overlay — intercepts taps outside the popover so any tap on a
+  // panel / zone closes the settings instead of changing life. Tracks the
+  // popover's hidden state via input.js's menu-toggle / menu-close handlers.
+  const backdrop = document.createElement("div");
+  backdrop.className = "menu-backdrop";
+  backdrop.dataset.action = "menu-close";
+  backdrop.setAttribute("aria-hidden", "true");
+  backdrop.hidden = true;
+  root.appendChild(backdrop);
 
   // First-game hint banner (one-time).
   if (!state.hintDismissed) {

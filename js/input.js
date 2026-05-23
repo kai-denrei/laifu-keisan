@@ -271,7 +271,18 @@ export function bindInput(root, getState, onChange) {
       }
       case "menu-toggle": {
         const popover = root.querySelector(".menu-popover");
-        if (popover) popover.hidden = !popover.hidden;
+        if (popover) {
+          popover.hidden = !popover.hidden;
+          const backdrop = root.querySelector(".menu-backdrop");
+          if (backdrop) backdrop.hidden = popover.hidden;
+        }
+        break;
+      }
+      case "menu-close": {
+        const popover = root.querySelector(".menu-popover");
+        if (popover) popover.hidden = true;
+        const backdrop = root.querySelector(".menu-backdrop");
+        if (backdrop) backdrop.hidden = true;
         break;
       }
       case "set-player-count": {
@@ -323,6 +334,8 @@ export function bindInput(root, getState, onChange) {
         if (modal) modal.hidden = false;
         const menu = root.querySelector(".menu-popover");
         if (menu) menu.hidden = true;
+        const backdrop = root.querySelector(".menu-backdrop");
+        if (backdrop) backdrop.hidden = true;
         break;
       }
       case "reset-cancel": {
@@ -351,11 +364,17 @@ export function bindInput(root, getState, onChange) {
     }
   });
 
-  // Dismiss menu / log / modal on outside tap (escape close affordance).
+  // Dismiss menu on outside tap (escape close affordance). Belt-and-braces
+  // alongside the .menu-backdrop overlay: this fires for taps that miss the
+  // backdrop too (e.g. on the hint-banner or in tiny gaps).
   root.addEventListener("pointerdown", (ev) => {
-    if (ev.target.closest(".zone, .menu-pill, .log-popover, .modal, .hint-banner")) return;
+    if (ev.target.closest(".menu-pill, .log-popover, .modal, .hint-banner")) return;
     const menu = root.querySelector(".menu-popover");
-    if (menu && !menu.hidden) menu.hidden = true;
+    if (menu && !menu.hidden) {
+      menu.hidden = true;
+      const backdrop = root.querySelector(".menu-backdrop");
+      if (backdrop) backdrop.hidden = true;
+    }
   }, true);
 
   // Visibility-driven cleanup: commit any in-flight batches when the tab

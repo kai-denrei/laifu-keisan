@@ -339,6 +339,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
+  padding-top: 36px; /* room for the × close button */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -346,6 +347,46 @@
   font-family: var(--font-ui);
   color: var(--text);
 }
+
+/* === Settings close affordances === */
+
+/* "×" button at the top-right of the popover. */
+.menu-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: transparent;
+  border: 0;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 0 4px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+}
+.menu-close:active {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+/* Full-viewport backdrop — when the menu is open, taps that don't hit the
+ * popover land here and dispatch menu-close (via data-action). Z-index sits
+ * just below .menu-pill (z-index: 6) so the popover itself stays clickable. */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.menu-backdrop[hidden] { display: none !important; }
 
 .menu-row {
   display: flex;
