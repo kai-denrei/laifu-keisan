@@ -4,14 +4,14 @@
 // and (where relevant) re-sample its particle targets.
 
 const SLIDERS = [
-  { key: "particlesPerDigit", label: "Particles / digit", min: 5, max: 120, step: 1, default: 35 },
+  { key: "particlesPerDigit", label: "Particles / digit", min: 5, max: 500, step: 5, default: 90 },
   { key: "particleSize", label: "Particle size (px)", min: 1, max: 8, step: 1, default: 2 },
   { key: "driftAmp", label: "Drift amplitude", min: 0, max: 3, step: 0.1, default: 0.6 },
-  { key: "seekStrength", label: "Seek strength", min: 0.01, max: 0.5, step: 0.01, default: 0.08 },
-  { key: "burstVelocity", label: "Burst velocity", min: 20, max: 320, step: 5, default: 140 },
-  { key: "burstLifetime", label: "Burst lifetime (ms)", min: 100, max: 2000, step: 50, default: 600 },
-  { key: "flashDuration", label: "Flash duration (ms)", min: 50, max: 1000, step: 25, default: 220 },
-  { key: "burstFriction", label: "Burst friction", min: 0.80, max: 0.99, step: 0.005, default: 0.93 },
+  { key: "seekStrength", label: "Seek strength", min: 0.02, max: 0.6, step: 0.02, default: 0.22 },
+  { key: "burstVelocity", label: "Burst velocity", min: 20, max: 400, step: 10, default: 180 },
+  { key: "burstLifetime", label: "Burst lifetime (ms)", min: 60, max: 1500, step: 20, default: 220 },
+  { key: "flashDuration", label: "Flash duration (ms)", min: 40, max: 800, step: 20, default: 140 },
+  { key: "burstFriction", label: "Burst friction", min: 0.80, max: 0.99, step: 0.005, default: 0.90 },
 ];
 
 export function mountDevSliders(onChange, getFps) {

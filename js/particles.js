@@ -19,15 +19,14 @@
 // Tunable via a config object; updateConfig() merges in slider changes.
 
 const DEFAULTS = {
-  particlesPerDigit: 35,
+  particlesPerDigit: 90,
   particleSize: 2,
   driftAmp: 0.6,
-  seekStrength: 0.08,
-  burstCount: 20,        // currently unused — burst applies to ALL existing particles in the panel
-  burstVelocity: 140,
-  burstLifetime: 600,
-  flashDuration: 220,
-  burstFriction: 0.93,
+  seekStrength: 0.22,    // higher = faster snap to new target after burst
+  burstVelocity: 180,
+  burstLifetime: 220,    // fast explosion
+  flashDuration: 140,
+  burstFriction: 0.90,
 };
 
 const STATE = {
@@ -62,6 +61,7 @@ export function startParticles() {
   window.addEventListener("resize", resizeCanvas);
   window.addEventListener("orientationchange", resizeCanvas);
   document.addEventListener("lifechange", onLifeChange);
+  document.addEventListener("life-preview", onLifePreview);
 
   // Defer the first sample one frame so the freshly-rendered DOM has bbox.
   requestAnimationFrame(() => {
@@ -80,6 +80,7 @@ export function stopParticles() {
   window.removeEventListener("resize", resizeCanvas);
   window.removeEventListener("orientationchange", resizeCanvas);
   document.removeEventListener("lifechange", onLifeChange);
+  document.removeEventListener("life-preview", onLifePreview);
   if (STATE.canvas) {
     STATE.canvas.remove();
     STATE.canvas = null;
@@ -131,6 +132,7 @@ export function refreshPanels() {
     targets.forEach((t) => {
       STATE.particles.push({
         playerId,
+        digitIndex: t.digitIndex,
         x: cx + (Math.random() - 0.5) * bbox.width,
         y: cy + (Math.random() - 0.5) * bbox.height,
         tx: t.x,
@@ -168,13 +170,13 @@ function resizeCanvas() {
 }
 
 function sampleDigitTargets(text, bbox, rotation, computedStyle) {
-  // Render text UPRIGHT into an offscreen canvas at the same intrinsic font
-  // metrics as the .life element. Sample alpha-passing pixels, then rotate
-  // the sample positions by the panel's seat-rotation when assigning targets.
-  // Working in the rotated frame at sample-time keeps the sampling resolution
-  // even (no axis-aligned bias).
-  const W = Math.max(48, Math.ceil(bbox.width * 1.4));
-  const H = Math.max(48, Math.ceil(bbox.height * 1.4));
+  // Render the WHOLE text upright into an offscreen canvas; measure per-char
+  // widths so each "on" pixel can be tagged with its digit index. Returns a
+  // flat list of { x, y, digitIndex } targets in screen-space (post-rotation).
+  // Per-digit tagging lets onLifePreview / onLifeChange burst+retarget only
+  // the digits that actually changed (e.g. tens stays still when ones rolls).
+  const W = Math.max(64, Math.ceil(bbox.width * 2.0));
+  const H = Math.max(64, Math.ceil(bbox.height * 2.0));
   const off = document.createElement("canvas");
   off.width = W;
   off.height = H;
@@ -183,57 +185,129 @@ function sampleDigitTargets(text, bbox, rotation, computedStyle) {
   o.fillStyle = "#fff";
   o.textAlign = "center";
   o.textBaseline = "middle";
-  // Best-effort font reconstruction — getComputedStyle returns shorthand on
-  // most browsers, but compose explicitly to handle the cases where it doesn't.
   const fontPx = parseFloat(computedStyle.fontSize) || 64;
   const family = computedStyle.fontFamily || "system-ui, sans-serif";
   const weight = computedStyle.fontWeight || "700";
   o.font = `${weight} ${fontPx}px ${family}`;
+
+  // Per-character widths to partition the rendered text into digit slots.
+  const charWidths = [];
+  let totalW = 0;
+  for (const c of text) {
+    const m = o.measureText(c);
+    charWidths.push(m.width);
+    totalW += m.width;
+  }
   o.fillText(text, W / 2, H / 2);
 
+  // x-bounds per digit (in canvas-pixel coords).
+  const charBounds = [];
+  let cursor = W / 2 - totalW / 2;
+  for (let i = 0; i < text.length; i++) {
+    charBounds.push({ minX: cursor, maxX: cursor + charWidths[i] });
+    cursor += charWidths[i];
+  }
+
   const data = o.getImageData(0, 0, W, H).data;
-  const onPixels = [];
+  const onByDigit = text.split("").map(() => []);
   const stride = 2;
   for (let y = 0; y < H; y += stride) {
     for (let x = 0; x < W; x += stride) {
       const i = (y * W + x) * 4;
-      if (data[i + 3] > 48) onPixels.push({ x: x - W / 2, y: y - H / 2 });
+      if (data[i + 3] <= 48) continue;
+      for (let d = 0; d < charBounds.length; d++) {
+        if (x >= charBounds[d].minX && x < charBounds[d].maxX) {
+          onByDigit[d].push({ x: x - W / 2, y: y - H / 2 });
+          break;
+        }
+      }
     }
   }
 
-  if (onPixels.length === 0) return [];
-
   const cosR = Math.cos(rotation);
   const sinR = Math.sin(rotation);
-  const N = Math.min(STATE.config.particlesPerDigit * text.length, onPixels.length);
+  const N = STATE.config.particlesPerDigit;
   const cx = bbox.left + bbox.width / 2;
   const cy = bbox.top + bbox.height / 2;
-  const targets = new Array(N);
-  for (let i = 0; i < N; i++) {
-    const p = onPixels[(Math.random() * onPixels.length) | 0];
-    const rx = p.x * cosR - p.y * sinR;
-    const ry = p.x * sinR + p.y * cosR;
-    targets[i] = { x: cx + rx, y: cy + ry };
-  }
+  const targets = [];
+  onByDigit.forEach((pixels, digitIndex) => {
+    if (pixels.length === 0) return;
+    for (let i = 0; i < N; i++) {
+      const p = pixels[(Math.random() * pixels.length) | 0];
+      const rx = p.x * cosR - p.y * sinR;
+      const ry = p.x * sinR + p.y * cosR;
+      targets.push({ x: cx + rx, y: cy + ry, digitIndex });
+    }
+  });
   return targets;
+}
+
+function onLifePreview(ev) {
+  const { playerId, sign, newValue } = ev.detail;
+  applyValueChange(playerId, sign, String(newValue));
 }
 
 function onLifeChange(ev) {
   const { playerId, delta, newValue } = ev.detail;
+  applyValueChange(playerId, Math.sign(delta) || 1, String(newValue));
+}
+
+// Single code path for both preview (per-tap) and commit (per-batch). Diffs
+// old vs new value per digit position; only digits that actually changed get
+// burst + retarget. Unchanged digits (e.g. the tens when ones rolls 20→21)
+// keep their existing particles in place — no flicker, no swim.
+function applyValueChange(playerId, sign, newStr) {
+  const panel = STATE.panels.find((p) => p.playerId === playerId);
+  if (!panel) return;
+  const oldStr = panel.value;
+  if (oldStr === newStr) return; // no-op (commit after the matching preview)
+
+  // Length change → re-init this panel's particles. Alignment shifts, so
+  // partial-diff would be wrong.
+  if (oldStr.length !== newStr.length) {
+    rebuildPanelParticles(playerId, newStr);
+    return;
+  }
+
+  // Per-digit diff.
+  const changedDigits = new Set();
+  for (let i = 0; i < newStr.length; i++) {
+    if (oldStr[i] !== newStr[i]) changedDigits.add(i);
+  }
+  if (changedDigits.size === 0) {
+    panel.value = newStr;
+    return;
+  }
+
+  // Re-sample for the new value (cheap — once per change, ≤1ms).
+  const lifeEl = document.querySelector(`.panel[data-player-id="${playerId}"] .life`);
+  if (!lifeEl) return;
+  const newBbox = lifeEl.getBoundingClientRect();
+  const newTargets = sampleDigitTargets(newStr, newBbox, panel.rotation, panel.cs);
+  const byDigit = new Map();
+  for (const t of newTargets) {
+    let arr = byDigit.get(t.digitIndex);
+    if (!arr) { arr = []; byDigit.set(t.digitIndex, arr); }
+    arr.push(t);
+  }
+
   const now = performance.now();
   const cfg = STATE.config;
-
   const root = getComputedStyle(document.documentElement);
   const flashColor =
-    (delta > 0
+    (sign > 0
       ? root.getPropertyValue("--accent-pos").trim()
-      : root.getPropertyValue("--accent-neg").trim()) || (delta > 0 ? "#39ff14" : "#ff1744");
+      : root.getPropertyValue("--accent-neg").trim()) || (sign > 0 ? "#39ff14" : "#ff1744");
 
-  // Burst on all existing particles for this player. The current particles
-  // become the "explosion" — no separate burst-only particle pool.
+  // Burst + retarget ONLY the changed-digit particles. The retarget is set
+  // simultaneously with the burst — particles fly outward then seek the new
+  // position; no setTimeout, no extra delay before re-ordering begins.
+  const ctr = new Map();
   for (let i = 0; i < STATE.particles.length; i++) {
     const p = STATE.particles[i];
     if (p.playerId !== playerId) continue;
+    if (!changedDigits.has(p.digitIndex)) continue;
+
     const ang = Math.random() * Math.PI * 2;
     const sp = cfg.burstVelocity * (0.4 + Math.random() * 0.9);
     p.vx = Math.cos(ang) * sp;
@@ -241,30 +315,57 @@ function onLifeChange(ev) {
     p.burstUntil = now + cfg.burstLifetime;
     p.flashUntil = now + cfg.flashDuration;
     p.flashColor = flashColor;
+
+    const slot = byDigit.get(p.digitIndex);
+    if (slot && slot.length) {
+      const idx = ctr.get(p.digitIndex) || 0;
+      ctr.set(p.digitIndex, idx + 1);
+      const t = slot[idx % slot.length];
+      p.tx = t.x;
+      p.ty = t.y;
+    }
   }
 
-  // After the burst window, re-sample targets for the new value and re-seek.
-  setTimeout(() => {
-    const panel = STATE.panels.find((pp) => pp.playerId === playerId);
-    if (!panel) return;
-    const lifeEl = document.querySelector(`.panel[data-player-id="${playerId}"] .life`);
-    if (!lifeEl) return;
-    const newBbox = lifeEl.getBoundingClientRect();
-    const newValueStr = (lifeEl.textContent || "").trim() || String(newValue);
-    const newTargets = sampleDigitTargets(newValueStr, newBbox, panel.rotation, panel.cs);
-    panel.bbox = newBbox;
-    panel.value = newValueStr;
-    panel.targets = newTargets;
+  panel.value = newStr;
+  panel.bbox = newBbox;
+  panel.targets = newTargets;
+}
 
-    let ti = 0;
-    for (let i = 0; i < STATE.particles.length; i++) {
-      const p = STATE.particles[i];
-      if (p.playerId !== playerId) continue;
-      const t = newTargets[ti % newTargets.length];
-      if (t) { p.tx = t.x; p.ty = t.y; }
-      ti++;
-    }
-  }, cfg.burstLifetime);
+function rebuildPanelParticles(playerId, newStr) {
+  STATE.particles = STATE.particles.filter((p) => p.playerId !== playerId);
+  const lifeEl = document.querySelector(`.panel[data-player-id="${playerId}"] .life`);
+  if (!lifeEl) return;
+  const panelEl = lifeEl.closest(".panel");
+  const bbox = lifeEl.getBoundingClientRect();
+  const inner = panelEl.querySelector(".panel-inner");
+  const rotationDeg = parseFloat(inner?.dataset.seatRotation || "0");
+  const rotation = (rotationDeg * Math.PI) / 180;
+  const cs = getComputedStyle(lifeEl);
+  const playerColor = readPlayerColor(panelEl);
+  const targets = sampleDigitTargets(newStr, bbox, rotation, cs);
+
+  const idx = STATE.panels.findIndex((p) => p.playerId === playerId);
+  const panelData = { playerId, bbox, rotation, color: playerColor, value: newStr, targets, cs };
+  if (idx >= 0) STATE.panels[idx] = panelData;
+  else STATE.panels.push(panelData);
+
+  const cx = bbox.left + bbox.width / 2;
+  const cy = bbox.top + bbox.height / 2;
+  for (const t of targets) {
+    STATE.particles.push({
+      playerId,
+      digitIndex: t.digitIndex,
+      x: cx + (Math.random() - 0.5) * bbox.width,
+      y: cy + (Math.random() - 0.5) * bbox.height,
+      tx: t.x,
+      ty: t.y,
+      vx: 0,
+      vy: 0,
+      burstUntil: 0,
+      flashUntil: 0,
+      flashColor: null,
+    });
+  }
 }
 
 function loop(now) {

@@ -128,6 +128,14 @@ export function bindInput(root, getState, onChange) {
     pp.delta += sign * step;
     const state = getState();
     renderPlayer(state, playerId, pp.delta);
+    // Side-channel for the particles skin: fire per-tap so particles burst
+    // immediately on the preview value, not just on the 1.2s-deferred commit.
+    // Carries the preview (current life + pending delta), not the committed
+    // life — particles renders the value the user is about to commit to.
+    const previewLife = state.players[playerId].life + pp.delta;
+    document.dispatchEvent(new CustomEvent("life-preview", {
+      detail: { playerId, sign, newValue: previewLife, delta: pp.delta },
+    }));
     scheduleIdleCommit(playerId);
   }
 
