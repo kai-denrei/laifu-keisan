@@ -5,6 +5,8 @@ import { render, computeRadialClipPaths } from "./render.js";
 import { bindInput } from "./input.js";
 import { applySkin } from "./skins.js";
 import { acquire, bindVisibilityReacquire } from "./wakelock.js";
+import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels } from "./particles.js";
+import { mountDevSliders, unmountDevSliders } from "./dev-sliders.js";
 
 // 1. Restore-or-new.
 let state = loadState() || createState();
@@ -54,7 +56,36 @@ function onResize() {
 window.addEventListener("resize", onResize);
 window.addEventListener("orientationchange", onResize);
 
-// 8. Register service worker.
+// 8. Particles skin — start/stop the canvas renderer when the skin changes.
+// The body[data-skin] attribute is the source of truth; applySkin updates it.
+// A MutationObserver reacts to skin changes from the menu without weaving
+// start/stop calls into every code path that touches skin.
+function syncParticlesWithSkin() {
+  const skin = document.body.getAttribute("data-skin");
+  if (skin === "particles") {
+    startParticles();
+    mountDevSliders(
+      (key, value) => updateParticleConfig({ [key]: value }),
+      getParticleFps,
+    );
+  } else {
+    stopParticles();
+    unmountDevSliders();
+  }
+}
+syncParticlesWithSkin();
+new MutationObserver(syncParticlesWithSkin).observe(document.body, {
+  attributes: true,
+  attributeFilter: ["data-skin"],
+});
+// Layout changes (player count, layoutVariant) move .life bboxes; re-sample.
+document.addEventListener("layout-change", () => {
+  if (document.body.getAttribute("data-skin") === "particles") {
+    requestAnimationFrame(() => refreshParticlePanels());
+  }
+});
+
+// 9. Register service worker.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});

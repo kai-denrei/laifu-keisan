@@ -91,6 +91,13 @@ export function bindInput(root, getState, onChange) {
       saveState(state);
       onChange();
       renderPlayer(state, playerId, 0);
+      // Side-channel for the experimental particles skin (and anything else
+      // that wants to react to commits without breaking the idempotent render
+      // contract). Carries delta + newValue so listeners don't have to peek
+      // at state.
+      document.dispatchEvent(new CustomEvent("lifechange", {
+        detail: { playerId, delta, newValue: state.players[playerId].life },
+      }));
     } else {
       // Nothing to commit; still need to clear preview.
       const state = getState();
@@ -292,6 +299,7 @@ export function bindInput(root, getState, onChange) {
         saveState(state);
         onChange();
         render(state, root);
+        document.dispatchEvent(new CustomEvent("layout-change"));
         break;
       }
       case "set-skin": {
@@ -349,6 +357,7 @@ export function bindInput(root, getState, onChange) {
         saveState(state);
         onChange();
         render(state, root);
+        document.dispatchEvent(new CustomEvent("layout-change"));
         const modal = root.querySelector('[data-modal="reset-confirm"]');
         if (modal) modal.hidden = true;
         break;

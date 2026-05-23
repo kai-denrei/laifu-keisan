@@ -109,3 +109,60 @@
   background: var(--menu-bg-soft);
   border: 1px solid var(--border);
 }
+
+/* ===== Particles — sci-fi, dark void, particle-rendered numerals =====
+ * The .life text element is kept in the DOM (its bounding box + computed
+ * font drive the particle layout), but rendered invisible. The particle
+ * canvas (created by js/particles.js) overlays the entire viewport at
+ * z-index 4 — above panels (z-index ≤ 3) but below the menu-pill (6)
+ * and menu-backdrop (5) so settings remain interactive.
+ */
+[data-skin="particles"] body {
+  background: var(--bg);
+}
+[data-skin="particles"] .panel {
+  border: 0;
+  background: transparent;
+}
+[data-skin="particles"] .panel-inner .life {
+  /* Hide the digit text but preserve its layout box so particles.js can
+   * read bbox + computed font for sampling. */
+  color: transparent;
+  text-shadow: none;
+}
+[data-skin="particles"] .panel::after {
+  /* Disable any patina/decoration from other skins. */
+  display: none !important;
+}
+[data-skin="particles"] .menu-pill .menu-toggle {
+  background: var(--menu-bg-soft);
+  border: 1px solid rgba(27, 240, 200, 0.35);
+  color: var(--p1-fg);
+}
+[data-skin="particles"] .menu-popover {
+  background: var(--menu-bg);
+  border: 1px solid rgba(27, 240, 200, 0.25);
+  color: var(--text);
+  box-shadow: 0 0 24px rgba(27, 240, 200, 0.12);
+}
+[data-skin="particles"] .menu-label,
+[data-skin="particles"] .stepper-value,
+[data-skin="particles"] .build-badge,
+[data-skin="particles"] .build-badge-hex {
+  color: var(--text);
+}
+[data-skin="particles"] .menu-choices button,
+[data-skin="particles"] .stepper button {
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+[data-skin="particles"] .menu-choices button[data-active="1"] {
+  background: var(--p1-fg);
+  color: var(--bg);
+  font-weight: 700;
+}
+[data-skin="particles"] .build-badge {
+  background: var(--menu-bg-soft);
+  border: 1px solid var(--border);
+}

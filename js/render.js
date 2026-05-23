@@ -180,6 +180,7 @@ export function renderShell(state, root) {
           <button type="button" data-action="set-skin" data-value="pastel">Pastel</button>
           <button type="button" data-action="set-skin" data-value="cyberpunk">Cyber</button>
           <button type="button" data-action="set-skin" data-value="heroic-fantasy">Heroic</button>
+          <button type="button" data-action="set-skin" data-value="particles">Particles</button>
         </div>
       </div>
       <div class="menu-row">

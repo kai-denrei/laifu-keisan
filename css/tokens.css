@@ -137,3 +137,40 @@
   --p5-bg: #18130d;              /* charcoal, soot-black */
   --p5-fg: #d4c39c;
 }
+
+/* ===== PARTICLES — experimental sci-fi skin =====
+ * Numbers rendered as 2D Canvas particle clouds (see js/particles.js).
+ * The panel bg is the dark void; the per-player fg drives the particle colour.
+ * Mainline DOM/CSS Grid constraint relaxed for this skin only.
+ */
+[data-skin="particles"] {
+  --bg: #02030a;                 /* deep space */
+  --panel-bg: transparent;       /* panels are invisible — particles ARE the visual */
+  --panel-bg-alt: transparent;
+  --text: #c8d0dc;
+  --text-dim: #6d7280;
+  --accent-pos: #39ff14;         /* terminal green — bursts on + */
+  --accent-neg: #ff1744;         /* alert red — bursts on − */
+  --border: rgba(60, 80, 110, 0.18);
+  --font-display: var(--font-mono);
+  --font-ui: var(--font-mono);
+  --shadow-ink: none;
+  --menu-bg: #060818;
+  --menu-bg-soft: #0a0e22;
+  --modal-overlay: rgba(2, 3, 10, 0.86);
+  --button-bg: #0a0e22;
+  --button-bg-active: #1bf0c8;
+
+  /* Per-player sci-fi palette — drives particle colours via --player-fg. */
+  --p1-bg: transparent;
+  --p1-fg: #1bf0c8;              /* teal */
+  --p2-bg: transparent;
+  --p2-fg: #ffd400;              /* yellow */
+  --p3-bg: transparent;
+  --p3-fg: #39ff14;              /* terminal green */
+  --p4-bg: transparent;
+  --p4-fg: #ff7b00;              /* danger orange */
+  --p5-bg: transparent;
+  --p5-fg: #ff1744;              /* alert red */
+}
+
