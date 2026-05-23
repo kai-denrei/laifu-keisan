@@ -333,8 +333,8 @@
   top: 56px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 260px;
-  max-width: min(92vw, 360px);
+  min-width: 300px;
+  max-width: min(94vw, 420px);
   background: var(--menu-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -713,40 +713,34 @@
   margin: 0;
 }
 
-/* === Skin pager (paginated skin selector in settings) === */
-.skin-pager {
-  display: flex;
-  align-items: center;
+/* === Skin grid (2-column layout in the settings popover) ===
+ * 4 skins (Pastel / Cyber / Heroic / Ryūshi) wrap to 2 rows of 2. Future
+ * skins flow to row 3+. Each button uses the same look as .menu-choices.
+ */
+.menu-row-skin {
+  align-items: flex-start;
+}
+.menu-row-skin .menu-label {
+  padding-top: 6px;
+}
+.skin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
-.skin-pager .skin-choices {
-  display: flex;
-  gap: 4px;
-}
-.skin-pager .skin-choices button[data-page] {
-  display: none;
-}
-/* Show only the buttons matching the current pager page. */
-.skin-pager[data-page="0"] .skin-choices button[data-page="0"] { display: inline-flex; }
-.skin-pager[data-page="1"] .skin-choices button[data-page="1"] { display: inline-flex; }
-.skin-pager[data-page="2"] .skin-choices button[data-page="2"] { display: inline-flex; }
-.skin-pager[data-page="3"] .skin-choices button[data-page="3"] { display: inline-flex; }
-.skin-pager .skin-arrow {
-  width: 26px;
-  height: 28px;
-  padding: 0;
-  border-radius: 6px;
+.skin-grid button {
+  padding: 6px 12px;
+  border-radius: 8px;
   background: var(--button-bg);
   color: var(--text);
   border: 1px solid var(--border);
   font-family: var(--font-ui);
-  font-size: 16px;
-  line-height: 1;
-  flex-shrink: 0;
+  font-size: 14px;
 }
-.skin-pager[data-page="0"] .skin-arrow[data-dir="-1"],
-.skin-pager[data-page="1"] .skin-arrow[data-dir="1"]:not([data-overflow]) {
-  visibility: hidden;
+.skin-grid button[data-active="1"] {
+  background: var(--button-bg-active);
+  color: var(--panel-bg);
+  font-weight: 600;
 }
-/* When more than 2 pages exist later, the [data-overflow] hint will keep the
-   right arrow visible. For now (2 pages), hide it on the last page. */
