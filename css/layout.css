@@ -409,6 +409,27 @@
   padding: 0 4px;
 }
 
+/* === Build badge (cache-bust visual indicator inside settings) === */
+.build-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  background: var(--menu-bg-soft);
+  border-radius: 6px;
+  font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-dim);
+  user-select: none;
+}
+.build-badge img {
+  display: block;
+  border-radius: 2px;
+}
+.build-badge-hex {
+  margin-left: 4px;
+  letter-spacing: 0.04em;
+}
+
 /* === Log popover === */
 
 .log-popover {

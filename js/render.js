@@ -198,11 +198,31 @@ export function renderShell(state, root) {
           <button type="button" data-action="toggle-history" data-value="on">On</button>
         </div>
       </div>
+      <div class="menu-row menu-row-build">
+        <span class="menu-label">Build</span>
+        <div class="build-badge" data-bind="build-badge" aria-label="Cache-bust build token"></div>
+      </div>
       <div class="menu-row menu-row-actions">
         <button type="button" class="menu-reset" data-action="reset-confirm">Reset game</button>
       </div>
     </div>
   `;
+
+  // Populate the build badge from <meta name="cb"> — three cb-shapes tiles + token hex.
+  const badgeMount = menu.querySelector('[data-bind="build-badge"]');
+  if (badgeMount) {
+    const cbMeta = document.querySelector('meta[name="cb"]');
+    const hex = ((cbMeta && cbMeta.getAttribute("content")) || "").toLowerCase().slice(0, 8);
+    if (/^[0-9a-f]{8}$/.test(hex)) {
+      const pad2 = (n) => String(n).padStart(2, "0");
+      const cells = [0, 1, 2].map((i) => parseInt(hex.slice(i * 2, i * 2 + 2), 16) % 64);
+      badgeMount.innerHTML =
+        cells
+          .map((c) => `<img src="cb-shapes/${pad2(c)}.svg?v=${hex}" alt="" width="18" height="18">`)
+          .join("") +
+        `<span class="build-badge-hex">${hex}</span>`;
+    }
+  }
   root.appendChild(menu);
 
   // First-game hint banner (one-time).
