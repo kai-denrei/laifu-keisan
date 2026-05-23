@@ -1,4 +1,4 @@
-const CB_TOKEN = "256101ab";
+const CB_TOKEN = "87bda6b1";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const BADGE_CELLS = [0, 1, 2].map(i =>
@@ -56,7 +56,16 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
   );
-  self.skipWaiting();
+  // No skipWaiting() here — let the new SW enter the "waiting" state and
+  // wait for the page to post a SKIP_WAITING message. Gives the user a
+  // chance to see the update toast and accept the swap on their terms.
+});
+
+// Pages send this when the user taps "Refresh" on the update toast.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {

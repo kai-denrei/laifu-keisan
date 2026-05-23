@@ -85,9 +85,59 @@ document.addEventListener("layout-change", () => {
   }
 });
 
-// 9. Register service worker.
+// 9. Register service worker + wire the update-toast flow.
+//
+// The SW no longer skipWaiting()s itself on install. Instead, when an update
+// reaches "installed" state with an existing controller on the page, we show
+// a small "New version — Refresh" toast. On Refresh we postMessage
+// SKIP_WAITING to the waiting SW; it activates, controllerchange fires, and
+// we reload. First-time installs (no prior controller) don't show the toast
+// — they just work.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").then((reg) => {
+      // SW already in waiting state on page load (user closed tab during a
+      // previous waiting window, e.g.) — surface the toast immediately.
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        showUpdateToast(reg);
+      }
+      reg.addEventListener("updatefound", () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+        newSW.addEventListener("statechange", () => {
+          if (newSW.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateToast(reg);
+          }
+        });
+      });
+    }).catch(() => {});
+
+    let _swRefreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (_swRefreshing) return;
+      _swRefreshing = true;
+      window.location.reload();
+    });
+  });
+}
+
+function showUpdateToast(reg) {
+  if (document.getElementById("sw-update-toast")) return;
+  const toast = document.createElement("div");
+  toast.id = "sw-update-toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.innerHTML = `
+    <span class="sw-update-msg">New version available</span>
+    <button type="button" class="sw-update-refresh">Refresh</button>
+    <button type="button" class="sw-update-dismiss" aria-label="Dismiss">×</button>
+  `;
+  document.body.appendChild(toast);
+  toast.querySelector(".sw-update-refresh").addEventListener("click", () => {
+    if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    // controllerchange listener will reload once the new SW takes over.
+  });
+  toast.querySelector(".sw-update-dismiss").addEventListener("click", () => {
+    toast.remove();
   });
 }

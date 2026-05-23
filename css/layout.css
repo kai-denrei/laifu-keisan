@@ -744,3 +744,53 @@
   color: var(--panel-bg);
   font-weight: 600;
 }
+
+/* === Service-worker update toast === */
+#sw-update-toast {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  background: rgba(18, 22, 36, 0.94);
+  color: #e8eaf2;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 140, 180, 0.28);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  font: 13px ui-sans-serif, system-ui, -apple-system, sans-serif;
+  z-index: 100000;
+  max-width: calc(100vw - 24px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+#sw-update-toast .sw-update-msg {
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+#sw-update-toast .sw-update-refresh {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #1bf0c8;
+  color: #02030a;
+  border: 0;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+#sw-update-toast .sw-update-refresh:active {
+  background: #18cca8;
+}
+#sw-update-toast .sw-update-dismiss {
+  background: transparent;
+  color: #aab2c3;
+  border: 0;
+  padding: 0 4px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
