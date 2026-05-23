@@ -1,4 +1,4 @@
-const CB_TOKEN = "34092e3a";
+const CB_TOKEN = "05be24b2";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const PRECACHE = [

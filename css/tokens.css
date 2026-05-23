@@ -1,18 +1,25 @@
 /* tokens.css — design tokens; one block per skin via [data-skin="..."].
  *
- * Token contract (every skin defines all of these):
+ * Core token contract (every skin defines all of these):
  *   --bg                background of the whole board (between panels)
- *   --panel-bg          per-panel default background
- *   --panel-bg-alt      optional per-seat tint (player 2 / 4 etc.)
- *   --text              primary text color (the life number)
+ *   --panel-bg          default panel background (fallback when no per-player tint)
+ *   --panel-bg-alt      legacy alt tint (kept for grid layouts that don't use --pN-bg)
+ *   --text              primary text color (the life number) — fallback
  *   --text-dim          dim text (log timestamps, menu labels)
  *   --accent-pos        the "+" zone highlight on press
  *   --accent-neg        the "−" zone highlight on press
  *   --border            hairline gutter between panels
  *   --font-display      the big numerals
  *   --font-ui           menu / log / hint text
- *   --frame             optional decorative frame layer (skin uses or ignores)
  *   --shadow-ink        glow / shadow under the number for legibility
+ *
+ * Per-player tokens (PER SKIN). For 2P only P1/P2 are used. For 3P/4P/5P,
+ * P3/P4/P5 fill in too. WCAG AA-large (≥3:1) holds for --pN-fg on --pN-bg.
+ *   --p1-bg, --p1-fg
+ *   --p2-bg, --p2-fg
+ *   --p3-bg, --p3-fg
+ *   --p4-bg, --p4-fg
+ *   --p5-bg, --p5-fg
  */
 
 /* ===== System font stacks (no web fonts, no network) ===== */
@@ -22,66 +29,111 @@
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
 }
 
-/* ===== PASTEL (default) ===== */
+/* ===== PASTEL (default) =====
+ * P1 white, P2 black, P3 blue, P4 purple, P5 brown — SOFT PASTEL variants.
+ * Black stays high-contrast (white text). Others use deeply muted, low-sat,
+ * light backgrounds with dark forgeround text for contrast ≥ 6:1.
+ */
 :root,
 [data-skin="pastel"] {
-  --bg: #f4ede0;                 /* warm parchment-cream */
+  --bg: #d9cfb9;                 /* warm parchment gutter */
   --panel-bg: #fff9ee;
-  --panel-bg-alt: #ecdfc9;       /* player 2 / 4 differentiation */
+  --panel-bg-alt: #ecdfc9;
   --text: #1c1a16;
   --text-dim: #6e655a;
-  --accent-pos: #b9e3b6;         /* soft green */
-  --accent-neg: #f3b7b0;         /* soft coral */
-  --border: #d8cdb8;
+  --accent-pos: #6da66a;         /* deeper green for hit feedback */
+  --accent-neg: #c66a5f;         /* deeper coral for hit feedback */
+  --border: #b9a888;
   --font-display: var(--font-system);
   --font-ui: var(--font-system);
-  --frame: none;
   --shadow-ink: none;
   --menu-bg: #fff9ee;
   --menu-bg-soft: #f4ede0;
   --modal-overlay: rgba(28, 26, 22, 0.45);
   --button-bg: #ecdfc9;
   --button-bg-active: #b9a888;
+
+  /* Per-player pastels */
+  --p1-bg: #fbf8f1;              /* white-cream */
+  --p1-fg: #1c1a16;
+  --p2-bg: #20211f;              /* black-ish */
+  --p2-fg: #f7f4eb;
+  --p3-bg: #cfdef0;              /* powder blue */
+  --p3-fg: #143049;
+  --p4-bg: #d7cbe6;              /* lavender pastel */
+  --p4-fg: #2f1e4b;
+  --p5-bg: #d8c2a3;              /* sandy brown pastel */
+  --p5-fg: #3d2912;
 }
 
-/* ===== CYBERPUNK ===== */
+/* ===== CYBERPUNK =====
+ * P1 yellow, P2 fuchsia, P3 teal, P4 orange, P5 blue.
+ * Dark base, neon accents — backgrounds are deep tints of the player color,
+ * foregrounds are bright neon for legibility on dark panels.
+ */
 [data-skin="cyberpunk"] {
   --bg: #05060c;
   --panel-bg: #0c0e1a;
   --panel-bg-alt: #0e1226;
   --text: #f5fbff;
   --text-dim: #6a7895;
-  --accent-pos: #1bf0c8;         /* neon teal */
-  --accent-neg: #ff3d80;         /* neon magenta */
+  --accent-pos: #1bf0c8;         /* neon teal — generic + */
+  --accent-neg: #ff3d80;         /* neon magenta — generic − */
   --border: #1a2238;
   --font-display: var(--font-mono);
   --font-ui: var(--font-mono);
-  --frame: cyber;
   --shadow-ink: 0 0 18px rgba(27, 240, 200, 0.18);
   --menu-bg: #0c0e1a;
   --menu-bg-soft: #131730;
   --modal-overlay: rgba(0, 0, 0, 0.78);
   --button-bg: #131730;
   --button-bg-active: #1bf0c8;
+
+  /* Per-player cyber palette: deep-dark panel + neon fg */
+  --p1-bg: #1a1605;              /* deep yellow-black */
+  --p1-fg: #ffe93d;              /* neon yellow */
+  --p2-bg: #1a0414;              /* deep fuchsia-black */
+  --p2-fg: #ff3df0;              /* neon fuchsia */
+  --p3-bg: #051a18;              /* deep teal-black */
+  --p3-fg: #1bf0c8;              /* neon teal */
+  --p4-bg: #1a0e05;              /* deep orange-black */
+  --p4-fg: #ff9b3d;              /* neon orange */
+  --p5-bg: #050e1a;              /* deep blue-black */
+  --p5-fg: #3d9bff;              /* neon blue */
 }
 
-/* ===== HEROIC FANTASY ===== */
+/* ===== HEROIC FANTASY =====
+ * P1 green, P2 red, P3 blue, P4 white, P5 black — heraldic / muted-earth.
+ * Background tints are muted earth-tones of the color, foregrounds are deep
+ * inks. Serif display. WCAG AA-large holds.
+ */
 [data-skin="heroic-fantasy"] {
-  --bg: #2a1d10;                 /* old leather */
-  --panel-bg: #efe2c4;            /* parchment */
+  --bg: #2a1d10;                 /* old leather gutter */
+  --panel-bg: #efe2c4;
   --panel-bg-alt: #e5d4ad;
   --text: #1f160a;
   --text-dim: #6a5634;
-  --accent-pos: #8baf65;         /* moss green */
-  --accent-neg: #b04a3a;         /* iron oxide */
+  --accent-pos: #6e8a4c;         /* moss green hit */
+  --accent-neg: #9c3b2c;         /* iron oxide hit */
   --border: #5e4218;
   --font-display: var(--font-serif);
   --font-ui: var(--font-serif);
-  --frame: heroic;
   --shadow-ink: none;
   --menu-bg: #efe2c4;
   --menu-bg-soft: #d9c69f;
   --modal-overlay: rgba(42, 29, 16, 0.6);
   --button-bg: #d9c69f;
   --button-bg-active: #5e4218;
+
+  /* Per-player heraldic palette */
+  --p1-bg: #c0d2a7;              /* muted heraldic green */
+  --p1-fg: #1f3010;
+  --p2-bg: #d6a499;              /* muted heraldic red */
+  --p2-fg: #3d130a;
+  --p3-bg: #a8bbd3;              /* muted heraldic blue */
+  --p3-fg: #11254a;
+  --p4-bg: #f1e8d0;              /* parchment white */
+  --p4-fg: #1f160a;
+  --p5-bg: #2a241e;              /* heraldic black */
+  --p5-fg: #efe2c4;
 }

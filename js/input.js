@@ -15,7 +15,7 @@
 // Commit = applyDelta(state, playerId, accumulatedDelta), save, then a fresh
 // renderPlayer with pendingDelta=0. The log gains one entry (not many).
 
-import { applyDelta, undoLast, setPlayerCount, setSkin, setStartingLife, resetGame, dismissHint, saveState } from "./state.js";
+import { applyDelta, undoLast, setPlayerCount, setSkin, setStartingLife, setHistoryEnabled, resetGame, dismissHint, saveState } from "./state.js";
 import { renderPlayer, renderLog, renderShell, renderMenu, render } from "./render.js";
 import { applySkin } from "./skins.js";
 
@@ -181,21 +181,22 @@ export function bindInput(root, getState, onChange) {
     const action = zone.dataset.action;
     if (Number.isNaN(playerId) || (action !== "plus" && action !== "minus")) return;
 
-    // Determine sign — but consider the panel's rotation. Per [[ux]] decision:
-    // top zone = +, bottom zone = − in the *panel's upright frame*. For a
-    // 180°-rotated panel, the panel-inner is flipped; the .zone-plus button
-    // is still the screen-top button. But the user thinks: my "+" is at MY
-    // top, not the screen top. Since the player is on the OPPOSITE side for
-    // 180° panels, "screen top" = "my bottom" from their perspective.
+    // Determine sign.
     //
-    // Resolution: invert sign for 180°-rotated panels so the *near edge* to
-    // the player is +.
+    // RADIAL panels (3P/5P): the zone elements live INSIDE .panel-inner and
+    // rotate with the wedge. Plus = inner-half (near table center), minus =
+    // outer-half (near screen edge / the seated player). Since the rotation
+    // is applied to a wrapper around the zones themselves, the sign is
+    // determined purely by which button was hit — no rotation flip needed.
+    //
+    // GRID panels (2P/4P): the zone elements live OUTSIDE .panel-inner and
+    // stay screen-aligned. For a 180°-rotated panel, "screen top" = "my
+    // bottom" from the player's perspective, so we invert the sign.
     const panel = zone.closest(".panel");
     const rotation = parseInt(panel?.dataset.seatRotation || "0", 10);
+    const isRadialZone = zone.classList.contains("zone-radial");
     let sign = action === "plus" ? 1 : -1;
-    if (rotation === 180) sign = -sign;
-    // For ±90° (pinwheel variant, future): we'd map left/right zones not top/bottom.
-    // Default 90°/-90° handling: keep tap mapping as-is (screen top = +).
+    if (!isRadialZone && rotation === 180) sign = -sign;
 
     ev.preventDefault();
     commitOthers(playerId);
@@ -235,7 +236,13 @@ export function bindInput(root, getState, onChange) {
     const state = getState();
 
     switch (action) {
+      case "noop": {
+        // Tapping the big number is a no-op now — history is opened via the
+        // per-panel "…" button when state.historyEnabled is true.
+        break;
+      }
       case "peek-log": {
+        if (!state.historyEnabled) break;
         const playerId = parseInt(t.dataset.playerId, 10);
         // Force-commit this player's in-flight batch before showing log.
         commit(playerId);
@@ -285,13 +292,30 @@ export function bindInput(root, getState, onChange) {
         renderMenu(state);
         break;
       }
-      case "set-starting-life": {
-        const n = parseInt(t.dataset.value, 10);
-        setStartingLife(state, n);
-        // Don't auto-reset; only affects new games and the reset action.
+      case "starting-life-step": {
+        const step = parseInt(t.dataset.step, 10);
+        if (Number.isNaN(step)) break;
+        setStartingLife(state, (state.startingLife || 20) + step);
         saveState(state);
         onChange();
         renderMenu(state);
+        break;
+      }
+      case "toggle-history": {
+        const want = t.dataset.value === "on";
+        setHistoryEnabled(state, want);
+        saveState(state);
+        onChange();
+        // Re-render all panels so the "…" buttons appear/disappear.
+        for (let i = 0; i < state.players.length; i++) {
+          renderPlayer(state, i, 0);
+        }
+        renderMenu(state);
+        // If turning OFF while popover is open, close it.
+        if (!want) {
+          const pop = root.querySelector(".log-popover");
+          if (pop) pop.hidden = true;
+        }
         break;
       }
       case "reset-confirm": {

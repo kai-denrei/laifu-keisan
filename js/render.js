@@ -9,58 +9,46 @@
 //   - render(state, root): orchestrator. Diffs against root's data attributes
 //     to decide whether shell needs rebuild.
 //
-// Each panel structure:
-//   <section class="panel" data-player-id="0" data-life="20">
-//     <button class="zone zone-plus" data-action="plus" aria-label="add one">
-//     <div class="panel-inner">
-//       <div class="delta" aria-live="polite" hidden></div>
-//       <div class="life" aria-label="life total">20</div>
-//       <button class="log-toggle" aria-label="show log">·</button>
-//     </div>
-//     <button class="zone zone-minus" data-action="minus" aria-label="subtract one">
-//   </section>
+// Per-count layouts:
+//   - 2P, 4P: CSS Grid (handled in layout.css).
+//   - 3P, 5P: RADIAL — wedges 120° / 72° apart, clip-path computed in JS to
+//     cover the entire viewport including corners. Recomputed on resize.
 //
-// .panel-inner carries `transform: rotate(<seat-rotation>)` via layout.css
-// based on data-seat. Children of .panel-inner (delta, life, log) inherit it.
-// The .zone buttons are *outside* .panel-inner so they fill the panel's
-// screen-aligned hit area (tap targets must remain finger-natural even though
-// the number is rotated).
+// Tap zone semantics:
+//   - Grid (2P/4P): zones are child <button class="zone"> elements OUTSIDE
+//     .panel-inner. Sign is flipped for rotation==180 panels (see input.js).
+//   - Radial (3P/5P): zones are INSIDE .panel-inner so they rotate with the
+//     wedge. Outer-side (near the screen edge / the seated player) = MINUS.
+//     Inner-side (near the screen center / the center of the table) = PLUS.
+//     This matches the convention "+ at panel-top, − at panel-bottom" once
+//     the panel is rotated to face the player.
 
 // Seat rotation per spec.
-// Layout rotation is per-count, per-seat-index.
+//   2P: south + north
+//   3P RADIAL: P0 south (0°), P1 120° CW from south, P2 240°
+//             — seats at 6 / 10 / 2 o'clock
+//   4P: bottom two 0°, top two 180°
+//   5P RADIAL: 72° apart, starting at south (P0=0°)
 const SEAT_ROTATIONS = {
   2: [0, 180],
-  3: [0, 180, 180],          // P1 bottom, P2 P3 top
-  4: [0, 0, 180, 180],       // bottom-left, bottom-right, top-left, top-right (visual order; layout decides position)
-  5: [180, 180, 180, 0, 0],  // top three, bottom two
+  3: [0, 120, 240],
+  4: [0, 0, 180, 180],
+  5: [0, 72, 144, 216, 288],
 };
 
-// For the menu pill positioning we put it dead center for 2P (between the two
-// panels along the gutter) and as a small top-center pill for other counts.
-// Layout CSS handles positioning.
+// Counts that use the radial layout (full-viewport wedges).
+const RADIAL_COUNTS = new Set([3, 5]);
 
-function makePanel(playerId, rotation) {
+function isRadial(count) {
+  return RADIAL_COUNTS.has(count);
+}
+
+function makePanel(playerId, rotation, radial) {
   const section = document.createElement("section");
   section.className = "panel";
   section.dataset.playerId = String(playerId);
   section.dataset.seatRotation = String(rotation);
-
-  // + zone (top in screen space, but "+" semantically — see below for inversion).
-  const plus = document.createElement("button");
-  plus.className = "zone zone-plus";
-  plus.type = "button";
-  plus.dataset.action = "plus";
-  plus.dataset.playerId = String(playerId);
-  plus.setAttribute("aria-label", "Add one");
-  plus.tabIndex = -1;
-
-  const minus = document.createElement("button");
-  minus.className = "zone zone-minus";
-  minus.type = "button";
-  minus.dataset.action = "minus";
-  minus.dataset.playerId = String(playerId);
-  minus.setAttribute("aria-label", "Subtract one");
-  minus.tabIndex = -1;
+  if (radial) section.dataset.radial = "1";
 
   const inner = document.createElement("div");
   inner.className = "panel-inner";
@@ -74,23 +62,73 @@ function makePanel(playerId, rotation) {
   const life = document.createElement("button");
   life.className = "life";
   life.type = "button";
-  life.dataset.action = "peek-log";
+  life.dataset.action = "noop"; // no longer the primary log affordance; "…" button is
   life.dataset.playerId = String(playerId);
-  life.setAttribute("aria-label", "Show log and undo");
+  life.setAttribute("aria-label", "Life total");
+
+  // Per-player history "…" button — corner of the rotated frame.
+  // Rendered always; hidden via CSS when history disabled.
+  const histBtn = document.createElement("button");
+  histBtn.className = "history-btn";
+  histBtn.type = "button";
+  histBtn.dataset.action = "peek-log";
+  histBtn.dataset.playerId = String(playerId);
+  histBtn.setAttribute("aria-label", "Show history");
+  histBtn.textContent = "…";
 
   inner.appendChild(delta);
   inner.appendChild(life);
+  inner.appendChild(histBtn);
 
-  // For a 180°-rotated panel: the natural "up" (where + is) is screen-bottom.
-  // So we order DOM: plus (screen-top), inner, minus (screen-bottom) — and
-  // for 180° panels we visually swap which zone is + vs −. To keep tap
-  // semantics intuitive (the player's reach toward the screen-top of their
-  // own panel = +), we mark the screen-top zone as + for 0°-rotated seats
-  // and as − for 180°-rotated seats; layout.css handles this via
-  // [data-seat-rotation="180"] selectors. Here we just put plus first.
-  section.appendChild(plus);
-  section.appendChild(inner);
-  section.appendChild(minus);
+  if (radial) {
+    // Radial: tap zones live inside .panel (not .panel-inner), so they
+    // inherit the wedge clip-path but DON'T rotate. They don't need to
+    // rotate because both shapes are radially symmetric:
+    //   - inner zone: a circle centered on the viewport
+    //   - outer zone: everything else inside the wedge clip
+    // Inner = + (near table center). Outer = − (near player's screen edge).
+    const outer = document.createElement("button");
+    outer.className = "zone zone-minus zone-radial zone-radial-outer";
+    outer.type = "button";
+    outer.dataset.action = "minus";
+    outer.dataset.playerId = String(playerId);
+    outer.setAttribute("aria-label", "Subtract one");
+    outer.tabIndex = -1;
+
+    const innerZone = document.createElement("button");
+    innerZone.className = "zone zone-plus zone-radial zone-radial-inner";
+    innerZone.type = "button";
+    innerZone.dataset.action = "plus";
+    innerZone.dataset.playerId = String(playerId);
+    innerZone.setAttribute("aria-label", "Add one");
+    innerZone.tabIndex = -1;
+
+    // Outer first (lower z-index via DOM order); inner on top.
+    section.appendChild(outer);
+    section.appendChild(innerZone);
+    section.appendChild(inner);
+  } else {
+    // Grid path: zones are screen-aligned, OUTSIDE the rotated content.
+    const plus = document.createElement("button");
+    plus.className = "zone zone-plus";
+    plus.type = "button";
+    plus.dataset.action = "plus";
+    plus.dataset.playerId = String(playerId);
+    plus.setAttribute("aria-label", "Add one");
+    plus.tabIndex = -1;
+
+    const minus = document.createElement("button");
+    minus.className = "zone zone-minus";
+    minus.type = "button";
+    minus.dataset.action = "minus";
+    minus.dataset.playerId = String(playerId);
+    minus.setAttribute("aria-label", "Subtract one");
+    minus.tabIndex = -1;
+
+    section.appendChild(plus);
+    section.appendChild(inner);
+    section.appendChild(minus);
+  }
 
   return section;
 }
@@ -111,14 +149,16 @@ export function renderShell(state, root) {
 
   root.dataset.playerCount = String(count);
   root.dataset.layoutVariant = variant;
+  root.dataset.radial = isRadial(count) ? "1" : "";
   root.replaceChildren();
 
   const rotations = SEAT_ROTATIONS[count] || SEAT_ROTATIONS[2];
+  const radial = isRadial(count);
   for (let i = 0; i < count; i++) {
-    root.appendChild(makePanel(i, rotations[i] ?? 0));
+    root.appendChild(makePanel(i, rotations[i] ?? 0, radial));
   }
 
-  // Center menu pill (reset / settings / player count / skin).
+  // Center menu pill (reset / settings / player count / skin / history / starting life stepper).
   const menu = document.createElement("div");
   menu.className = "menu-pill";
   menu.innerHTML = `
@@ -143,10 +183,19 @@ export function renderShell(state, root) {
       </div>
       <div class="menu-row">
         <span class="menu-label">Start at</span>
-        <div class="menu-choices" data-choice-group="starting-life">
-          <button type="button" data-action="set-starting-life" data-value="20">20</button>
-          <button type="button" data-action="set-starting-life" data-value="30">30</button>
-          <button type="button" data-action="set-starting-life" data-value="40">40</button>
+        <div class="stepper" data-choice-group="starting-life">
+          <button type="button" data-action="starting-life-step" data-step="-5" aria-label="Decrease by 5">−5</button>
+          <button type="button" data-action="starting-life-step" data-step="-1" aria-label="Decrease by 1">−1</button>
+          <span class="stepper-value" data-bind="starting-life">20</span>
+          <button type="button" data-action="starting-life-step" data-step="1" aria-label="Increase by 1">+1</button>
+          <button type="button" data-action="starting-life-step" data-step="5" aria-label="Increase by 5">+5</button>
+        </div>
+      </div>
+      <div class="menu-row">
+        <span class="menu-label">History</span>
+        <div class="menu-choices" data-choice-group="history">
+          <button type="button" data-action="toggle-history" data-value="off">Off</button>
+          <button type="button" data-action="toggle-history" data-value="on">On</button>
         </div>
       </div>
       <div class="menu-row menu-row-actions">
@@ -205,6 +254,199 @@ export function renderShell(state, root) {
     </div>
   `;
   root.appendChild(confirm);
+
+  // Compute radial geometry if needed.
+  if (radial) {
+    computeRadialClipPaths(state);
+  }
+}
+
+/**
+ * Compute clip-path polygons for radial wedges so they fill the entire
+ * viewport including corners. Each wedge spans an angular slice
+ *   (startAngle, endAngle) measured clockwise from south (6 o'clock).
+ *
+ * Algorithm: walk around the viewport rectangle from startAngle to endAngle.
+ * Start vertex: center. Then the perimeter intersection at startAngle.
+ * Then any corner points whose angle from center lies inside (startAngle,
+ * endAngle). Then the perimeter intersection at endAngle. Close with the
+ * center.
+ *
+ * Returned CSS clip-path uses absolute px from the panel's top-left. Since
+ * each panel is absolute-positioned at (0,0) with width/height = viewport,
+ * the math is in viewport coords directly.
+ */
+export function computeRadialClipPaths(state) {
+  const root = document.getElementById("board");
+  if (!root) return;
+  const count = state.playerCount;
+  if (!isRadial(count)) return;
+
+  const rect = root.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const rotations = SEAT_ROTATIONS[count];
+  const wedgeAngle = 360 / count;
+
+  // Angles: we want P0 centered at south (angle 90° in standard math, but
+  // we work in "clockwise from south" because that matches seat-rotation).
+  // Convert "clockwise from south" → screen-space (x right, y down) by:
+  //   theta_screen = (90° + rotation) in degrees, where +90° is south.
+  // But we'll just operate in "clockwise-from-south" everywhere and convert
+  // at the boundary intersection step.
+
+  // For each player i, the wedge center angle = rotations[i] (CW from south).
+  // The wedge spans [center - wedgeAngle/2, center + wedgeAngle/2].
+  for (let i = 0; i < count; i++) {
+    const centerAngle = rotations[i]; // CW from south, degrees
+    const startAngle = normalize(centerAngle - wedgeAngle / 2);
+    const endAngle = normalize(centerAngle + wedgeAngle / 2);
+
+    const points = computeWedgePolygon(cx, cy, W, H, startAngle, endAngle);
+    const clipPath = `polygon(${points.map(([x, y]) => `${x.toFixed(2)}px ${y.toFixed(2)}px`).join(", ")})`;
+
+    const panel = root.querySelector(`.panel[data-player-id="${i}"]`);
+    if (panel) {
+      panel.style.clipPath = clipPath;
+      panel.style.webkitClipPath = clipPath;
+    }
+  }
+}
+
+function normalize(deg) {
+  let d = deg % 360;
+  if (d < 0) d += 360;
+  return d;
+}
+
+/**
+ * Convert "clockwise from south" angle to a screen-space ray from (cx,cy).
+ *
+ * Spec maps 3P seats at the 6 / 10 / 2 o'clock positions with rotations
+ * 0° / 120° / 240°. On a clock face, 6 → 10 is 4 hours = 120° CLOCKWISE
+ * (the conventional clock-rotation direction). Going visually clockwise
+ * from 6: 6 → 7 → 8 → 9 → 10 → 11 → 12 → 1 → 2 etc.
+ *
+ * In screen coords (y-axis points DOWN), visually-clockwise motion is the
+ * same direction as math-counterclockwise. So rotating the south vector
+ * (0, +1) clockwise (visually) by angle a:
+ *   Math CCW rotation of (0, 1):
+ *     x' = 0·cos a - 1·sin a = -sin a
+ *     y' = 0·sin a + 1·cos a = cos a
+ *
+ * Quick checks:
+ *   angle   0   → (0, 1)         = south (6 o'clock) ✓
+ *   angle 120°  → (-0.866, -0.5) = upper-left (10 o'clock) ✓
+ *   angle 240°  → (+0.866, -0.5) = upper-right (2 o'clock) ✓
+ *   angle  72°  → (-0.951, 0.309) = 7-ish o'clock ✓
+ */
+function rayDir(angleCwFromSouth) {
+  const rad = (angleCwFromSouth * Math.PI) / 180;
+  return { x: -Math.sin(rad), y: Math.cos(rad) };
+}
+
+/**
+ * Ray-rectangle intersection. Ray starts at (cx,cy) with direction (dx,dy).
+ * Rectangle is [0,W]×[0,H]. Returns the (x,y) on the perimeter.
+ */
+function rayHitRect(cx, cy, dx, dy, W, H) {
+  // Find smallest positive t such that cx + t*dx ∈ [0,W] AND cy + t*dy ∈ [0,H]
+  // and lands ON the boundary.
+  let tBest = Infinity;
+  const eps = 1e-9;
+  if (dx > eps) {
+    const t = (W - cx) / dx;
+    if (t > 0 && t < tBest) tBest = t;
+  } else if (dx < -eps) {
+    const t = (0 - cx) / dx;
+    if (t > 0 && t < tBest) tBest = t;
+  }
+  if (dy > eps) {
+    const t = (H - cy) / dy;
+    if (t > 0 && t < tBest) tBest = t;
+  } else if (dy < -eps) {
+    const t = (0 - cy) / dy;
+    if (t > 0 && t < tBest) tBest = t;
+  }
+  return [cx + tBest * dx, cy + tBest * dy];
+}
+
+/**
+ * Compute polygon vertices for a wedge from startAngle → endAngle (clockwise
+ * from south), going CW around the wedge interior. The wedge always spans
+ * less than 360° and is contiguous (handles wrap-around).
+ */
+function computeWedgePolygon(cx, cy, W, H, startAngle, endAngle) {
+  // The four corners of the rectangle expressed as "clockwise from south"
+  // angle from center:
+  //   bottom-left  (0, H)   → angle ≈ atan2 of (dx=-cx, dy=H-cy)
+  //   top-left     (0, 0)   → (dx=-cx, dy=-cy)
+  //   top-right    (W, 0)   → (dx=W-cx, dy=-cy)
+  //   bottom-right (W, H)   → (dx=W-cx, dy=H-cy)
+  const corners = [
+    [0, H], [0, 0], [W, 0], [W, H],
+  ];
+  // Compute angle CW-from-south for each corner.
+  // Inverse of rayDir: given (dx, dy) (unnormalized direction), angle CW-from-south:
+  //   x = -sin(angle), y = cos(angle)
+  //   → angle = atan2(-dx, dy)  (in radians)
+  const cornerAngles = corners.map(([x, y]) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    let deg = (Math.atan2(-dx, dy) * 180) / Math.PI;
+    return normalize(deg);
+  });
+  // Pair (corner, angle) and we'll pick those whose angle is strictly within
+  // (startAngle, endAngle) going clockwise.
+
+  // The wedge spans startAngle → endAngle in the CW direction.
+  // A corner with angle θ is inside the wedge iff
+  //   inCW(startAngle, endAngle, θ) — i.e. θ comes between start and end
+  //   when traversing clockwise from start.
+
+  function inCW(start, end, theta) {
+    // Going CW from start to end. CW from south in our scheme means
+    // increasing angle (since 0→south, 90→west, 180→north, 270→east).
+    // So inCW = does theta lie in (start, end) on the increasing circle?
+    if (start === end) return false;
+    const s = normalize(start);
+    const e = normalize(end);
+    const t = normalize(theta);
+    if (s < e) {
+      return t > s && t < e;
+    } else {
+      // Wraps past 360.
+      return t > s || t < e;
+    }
+  }
+
+  // Collect corners in CW order from startAngle.
+  const cornerOrder = [];
+  for (let k = 0; k < 4; k++) {
+    if (inCW(startAngle, endAngle, cornerAngles[k])) {
+      cornerOrder.push({ pt: corners[k], angle: cornerAngles[k] });
+    }
+  }
+  // Sort by CW distance from startAngle.
+  cornerOrder.sort((a, b) => {
+    const da = normalize(a.angle - startAngle);
+    const db = normalize(b.angle - startAngle);
+    return da - db;
+  });
+
+  const startDir = rayDir(startAngle);
+  const endDir = rayDir(endAngle);
+  const startHit = rayHitRect(cx, cy, startDir.x, startDir.y, W, H);
+  const endHit = rayHitRect(cx, cy, endDir.x, endDir.y, W, H);
+
+  const poly = [];
+  poly.push([cx, cy]);
+  poly.push(startHit);
+  for (const c of cornerOrder) poly.push(c.pt);
+  poly.push(endHit);
+  return poly;
 }
 
 /**
@@ -244,6 +486,12 @@ export function renderPlayer(state, playerId, pendingDelta = 0) {
     panel.dataset.delta = String(pendingDelta);
     panel.dataset.deltaSign = pendingDelta > 0 ? "plus" : "minus";
   }
+
+  // History button visibility tracks state.historyEnabled.
+  const histBtn = panel.querySelector(".history-btn");
+  if (histBtn) {
+    histBtn.hidden = !state.historyEnabled;
+  }
 }
 
 /**
@@ -258,9 +506,12 @@ export function renderMenu(state) {
   root.querySelectorAll('[data-choice-group="skin"] button').forEach(b => {
     b.dataset.active = (b.dataset.value === state.skin) ? "1" : "";
   });
-  root.querySelectorAll('[data-choice-group="starting-life"] button').forEach(b => {
-    b.dataset.active = (parseInt(b.dataset.value, 10) === state.startingLife) ? "1" : "";
+  root.querySelectorAll('[data-choice-group="history"] button').forEach(b => {
+    const want = b.dataset.value === "on";
+    b.dataset.active = (want === !!state.historyEnabled) ? "1" : "";
   });
+  const stepperVal = root.querySelector('[data-bind="starting-life"]');
+  if (stepperVal) stepperVal.textContent = String(state.startingLife);
 }
 
 /**
@@ -272,6 +523,9 @@ export function render(state, root, pendingDeltas = {}) {
   renderMenu(state);
   for (let i = 0; i < state.players.length; i++) {
     renderPlayer(state, i, pendingDeltas[i] || 0);
+  }
+  if (isRadial(state.playerCount)) {
+    computeRadialClipPaths(state);
   }
 }
 

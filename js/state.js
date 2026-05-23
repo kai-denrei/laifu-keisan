@@ -28,6 +28,7 @@ const DEFAULTS = Object.freeze({
   skin: "pastel",
   layoutVariant: "default",
   hintDismissed: false,
+  historyEnabled: false,
 });
 
 const SKINS = ["pastel", "cyberpunk", "heroic-fantasy"];
@@ -84,6 +85,8 @@ export function loadState() {
       return rehydrated;
     });
     if (!SKINS.includes(parsed.skin)) parsed.skin = "pastel";
+    // Backfill new flags from older saves.
+    if (typeof parsed.historyEnabled !== "boolean") parsed.historyEnabled = false;
     return parsed;
   } catch {
     return null;
@@ -100,6 +103,7 @@ export function saveState(state) {
       skin: state.skin,
       layoutVariant: state.layoutVariant,
       hintDismissed: !!state.hintDismissed,
+      historyEnabled: !!state.historyEnabled,
       players: state.players.map(p => ({
         id: p.id,
         counters: { ...p.counters },
@@ -160,8 +164,12 @@ export function setSkin(state, skin) {
 }
 
 export function setStartingLife(state, n) {
-  n = Math.max(1, Math.min(9999, n | 0));
+  n = Math.max(1, Math.min(999, n | 0));
   state.startingLife = n;
+}
+
+export function setHistoryEnabled(state, enabled) {
+  state.historyEnabled = !!enabled;
 }
 
 /**

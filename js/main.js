@@ -1,7 +1,7 @@
 // main.js — wire everything together; restore-or-new on load; register SW.
 
 import { createState, loadState, saveState } from "./state.js";
-import { render } from "./render.js";
+import { render, computeRadialClipPaths } from "./render.js";
 import { bindInput } from "./input.js";
 import { applySkin } from "./skins.js";
 import { acquire, bindVisibilityReacquire } from "./wakelock.js";
@@ -43,7 +43,18 @@ window.addEventListener("load", () => {
 // Fallback: first pointerdown re-attempts.
 window.addEventListener("pointerdown", armWakeLock, { once: false, passive: true });
 
-// 7. Register service worker.
+// 7. Recompute radial clip-paths on resize / orientation change.
+let resizeTimer = null;
+function onResize() {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    computeRadialClipPaths(state);
+  }, 60);
+}
+window.addEventListener("resize", onResize);
+window.addEventListener("orientationchange", onResize);
+
+// 8. Register service worker.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});

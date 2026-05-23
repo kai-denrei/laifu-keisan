@@ -1,23 +1,24 @@
-/* layout.css — CSS Grid panels and per-seat rotation.
+/* layout.css — CSS Grid (2P/4P) + Radial (3P/5P) panels and per-seat rotation.
  *
  * Convention: rotation in DEGREES CLOCKWISE via transform: rotate().
  *   0°   → upright to a player at the BOTTOM edge ("you").
  *   180° → upright to a player at the TOP edge (across the table).
  *
- * The .panel itself is the screen-aligned grid cell containing the +/− tap
- * zones. The .panel-inner is what rotates; the number and delta live inside.
- * Tap zones are *outside* .panel-inner so they remain screen-aligned for
- * finger reach, but per [[dev]] decision we flip the sign for 180° panels
- * so the "near edge to the player" is always +.
+ * Grid layouts: panels are grid cells; tap zones are OUTSIDE .panel-inner so
+ * they stay screen-aligned. JS flips the sign for 180°-rotated grid panels.
+ *
+ * Radial layouts (3P/5P): panels are full-viewport, absolute-positioned, with
+ * clip-path polygons computed in render.js to carve out a wedge each. Tap
+ * zones live INSIDE .panel-inner so they rotate with the wedge. Outer-half =
+ * minus (near the player), inner-half = plus (near the table center).
  */
 
 #board {
-  gap: 4px; /* hairline gutters between seats */
+  gap: 4px; /* hairline gutters between seats (grid only) */
   background: var(--border);
-  /* fallback: stacked 1 col */
 }
 
-/* === Player count layouts === */
+/* === GRID LAYOUTS (2P / 4P) === */
 
 /* 2P: 1 col × 2 rows */
 #board[data-player-count="2"] {
@@ -26,74 +27,71 @@
   grid-template-areas:
     "p1"
     "p0";
+  gap: 4px;
 }
 #board[data-player-count="2"] .panel[data-player-id="0"] { grid-area: p0; }
 #board[data-player-count="2"] .panel[data-player-id="1"] { grid-area: p1; }
 
-/* 3P: bottom full-width + top split in two
-   Visual:
-     [ p1 ][ p2 ]   <- top row, two players facing south
-     [    p0    ]   <- bottom row, one player facing north
-*/
-#board[data-player-count="3"] {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  grid-template-areas:
-    "p1 p2"
-    "p0 p0";
-}
-#board[data-player-count="3"] .panel[data-player-id="0"] { grid-area: p0; }
-#board[data-player-count="3"] .panel[data-player-id="1"] { grid-area: p1; }
-#board[data-player-count="3"] .panel[data-player-id="2"] { grid-area: p2; }
-
-/* 4P: 2×2 grid (two players per long side) */
+/* 4P: 2×2 grid */
 #board[data-player-count="4"] {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   grid-template-areas:
     "p2 p3"
     "p0 p1";
+  gap: 4px;
 }
 #board[data-player-count="4"] .panel[data-player-id="0"] { grid-area: p0; }
 #board[data-player-count="4"] .panel[data-player-id="1"] { grid-area: p1; }
 #board[data-player-count="4"] .panel[data-player-id="2"] { grid-area: p2; }
 #board[data-player-count="4"] .panel[data-player-id="3"] { grid-area: p3; }
 
-/* 5P: top row of 3 + bottom row of 2
-   Visual:
-     [ p0 ][ p1 ][ p2 ]   <- top three, facing south (rotation 180)
-     [    p3   ][ p4  ]   <- bottom two, facing north (rotation 0)
-*/
-#board[data-player-count="5"] {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  grid-template-areas:
-    "p0 p1 p2"
-    "p3 p3 p4";
-}
-#board[data-player-count="5"] .panel[data-player-id="0"] { grid-area: p0; }
-#board[data-player-count="5"] .panel[data-player-id="1"] { grid-area: p1; }
-#board[data-player-count="5"] .panel[data-player-id="2"] { grid-area: p2; }
-#board[data-player-count="5"] .panel[data-player-id="3"] { grid-area: p3; }
-#board[data-player-count="5"] .panel[data-player-id="4"] { grid-area: p4; }
+/* === RADIAL LAYOUTS (3P / 5P) === */
 
-/* === Panel structure === */
+#board[data-radial="1"] {
+  display: block;     /* override grid */
+  gap: 0;
+  position: relative;
+  background: var(--border);
+}
+
+#board[data-radial="1"] .panel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* clip-path is set per-panel via JS in computeRadialClipPaths() */
+}
+
+/* === Panel structure (shared) === */
 
 .panel {
   position: relative;
   display: grid;
-  grid-template-rows: 1fr 1fr;            /* + zone (top) / − zone (bottom) */
+  grid-template-rows: 1fr 1fr;            /* + zone (top) / − zone (bottom) — grid path */
   background: var(--panel-bg);
   overflow: hidden;
   contain: layout paint;
   isolation: isolate;
+  color: var(--text);
 }
 
-/* Alternating tint for player differentiation */
-.panel[data-player-id="1"] { background: var(--panel-bg-alt); }
-.panel[data-player-id="3"] { background: var(--panel-bg-alt); }
+/* Radial panels don't use the grid-template-rows split — zones live inside .panel-inner */
+.panel[data-radial="1"] {
+  display: block;
+}
 
-/* Tap zones — fill the panel; sit above .panel-inner via DOM order then z-index */
+/* === Per-player background + foreground tokens ===
+ * Apply the --pN-bg/--pN-fg pair to each panel by id. The number color is
+ * --player-fg (set per-panel via the var). Token contract holds across skins.
+ */
+.panel[data-player-id="0"] { background: var(--p1-bg); --player-fg: var(--p1-fg); }
+.panel[data-player-id="1"] { background: var(--p2-bg); --player-fg: var(--p2-fg); }
+.panel[data-player-id="2"] { background: var(--p3-bg); --player-fg: var(--p3-fg); }
+.panel[data-player-id="3"] { background: var(--p4-bg); --player-fg: var(--p4-fg); }
+.panel[data-player-id="4"] { background: var(--p5-bg); --player-fg: var(--p5-fg); }
+
+/* === Tap zones — GRID path === */
 .zone {
   width: 100%;
   height: 100%;
@@ -106,14 +104,6 @@
 .zone-plus { grid-row: 1; }
 .zone-minus { grid-row: 2; }
 
-/* Per-rotation flip of zone *visual* hint (+ vs − labels):
-   - 0° panel (rotation 0): top zone is + for the player at the bottom-edge.
-   - 180° panel: the player is at the top edge. From their perspective the
-     "screen top" of THIS panel is their bottom. So the screen-top zone
-     should feel like − for them. The JS already inverts the sign for 180°
-     panels; the *visual hint* must match. We use a CSS variable to label
-     the right zone with a + glyph or − glyph and to tint it.
-*/
 .zone::after {
   content: "";
   position: absolute;
@@ -126,11 +116,48 @@
 .zone-plus::after { background: var(--accent-pos); }
 .zone-minus::after { background: var(--accent-neg); }
 
-/* For 180°-rotated panels, swap the accent colors so the *near edge*
-   to the seated player tints in the color that matches what their sign
-   actually does. */
-.panel[data-seat-rotation="180"] .zone-plus::after { background: var(--accent-neg); }
-.panel[data-seat-rotation="180"] .zone-minus::after { background: var(--accent-pos); }
+/* GRID: for 180°-rotated panels, swap which screen-zone shows + tint vs −
+   tint so the *near edge* to the seated player matches what their sign does. */
+.panel[data-seat-rotation="180"]:not([data-radial="1"]) .zone-plus::after { background: var(--accent-neg); }
+.panel[data-seat-rotation="180"]:not([data-radial="1"]) .zone-minus::after { background: var(--accent-pos); }
+
+/* === RADIAL tap zones ===
+ *
+ * Radial zones sit INSIDE .panel (which has the wedge clip-path) but OUTSIDE
+ * .panel-inner (which rotates). They don't need to rotate because both
+ * shapes are radially symmetric:
+ *   - inner zone: a circle centered on the viewport center → + (near table center)
+ *   - outer zone: everything else inside the wedge clip     → − (near player's screen edge)
+ *
+ * Why not put them inside .panel-inner so they rotate? Because rotating the
+ * panel-inner rectangle makes its CORNERS poke outside the viewport box, and
+ * the rest of the wedge corners are no longer covered by the rotated child.
+ * Symmetric shapes outside the rotation avoid the gap.
+ */
+.zone-radial {
+  position: absolute;
+  grid-row: auto;       /* override the shared grid rule */
+  z-index: 2;
+}
+/* Outer zone: fills the entire panel (== full viewport). The .panel's
+ * clip-path crops this to the wedge. The inner-zone circle sits on top. */
+.zone-radial-outer {
+  inset: 0;
+  width: auto;
+  height: auto;
+  z-index: 2;
+}
+/* Inner zone: circle at viewport center. Radius ~22vmin = decent thumb target
+ * yet small enough that the outer zone dominates near the screen edges. */
+.zone-radial-inner {
+  top: 50%;
+  left: 50%;
+  width: 44vmin;
+  height: 44vmin;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: 3;           /* above the outer zone */
+}
 
 /* === Inner content (rotates) === */
 
@@ -142,20 +169,46 @@
   pointer-events: none; /* visuals only; zones absorb most taps. .life opts in. */
   transform: rotate(var(--seat-rotation, 0deg));
   transform-origin: center center;
-  z-index: 3;           /* above .zone (z 2), so .life can be tapped */
+  z-index: 3;
 }
 
-/* The big number — sits above the +/− zones so tapping the number opens log */
+/* For RADIAL layouts, the panel-inner is viewport-sized but the WEDGE only
+ * occupies a slice. The number, centered in panel-inner, lands at the wedge
+ * vertex (viewport center). Push it along the rotated y-axis (toward the
+ * player) so it sits inside the player's wedge. The translate is in the
+ * panel-inner's local rotated frame, so each player's number ends up offset
+ * toward their seat regardless of seat-rotation. */
+#board[data-radial="1"] .panel-inner .life {
+  /* Push the number out along the rotated y-axis (toward the player's edge).
+   * Different push-distance per count: 3P wedges are 120° wide so the wedge
+   * extends further along the bisector before clipping by the viewport edge;
+   * 5P wedges are 72° wide and clip sooner, so push less. */
+  transform: translateY(30vmin);
+}
+#board[data-player-count="5"] .panel-inner .life {
+  transform: translateY(24vmin);
+}
+#board[data-radial="1"] .panel-inner .delta {
+  /* Keep delta near the number — in rotated frame. */
+  top: auto;
+  bottom: calc(50% - 42vmin);
+}
+
+/* Radial zones (siblings of panel-inner inside .panel) need pointer events. */
+.panel[data-radial="1"] .zone-radial {
+  pointer-events: auto;
+}
+
+/* The big number — sits above the +/− zones; .life is a button but it's a no-op now. */
 .life {
-  pointer-events: auto;        /* tap to open log */
+  pointer-events: none;
   position: relative;
   font-family: var(--font-display);
   font-weight: 700;
-  color: var(--text);
+  color: var(--player-fg, var(--text));
   line-height: 0.95;
   letter-spacing: -0.02em;
   text-align: center;
-  /* size: vmin-based, layout-aware via clamp */
   font-size: clamp(72px, 28vmin, 240px);
   text-shadow: var(--shadow-ink, none);
   background: transparent;
@@ -163,6 +216,7 @@
   border-radius: 12px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+  z-index: 3;
 }
 
 /* Tweaks per count: smaller numerals when panels are smaller */
@@ -192,25 +246,62 @@
   white-space: nowrap;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  z-index: 4;
 }
 .panel[data-delta-sign="plus"] .delta { color: var(--accent-pos); border-color: var(--accent-pos); }
 .panel[data-delta-sign="minus"] .delta { color: var(--accent-neg); border-color: var(--accent-neg); }
+
+/* === Per-player history "…" button === */
+/* Placement: bottom-left in the player's reading frame (i.e. bottom-left of
+ * .panel-inner natural coords). Picked over bottom-right to avoid colliding
+ * with the cache-bust badge fixed at the screen's bottom-right. */
+.history-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--player-fg, var(--text)) 18%, transparent);
+  color: var(--player-fg, var(--text));
+  border: 1px solid color-mix(in srgb, var(--player-fg, var(--text)) 30%, transparent);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 0 6px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 5;
+}
+.history-btn[hidden] { display: none !important; }
+
+/* Radial layouts: panel-inner is viewport-sized, so the corner positioning
+ * above would land outside the wedge. Anchor relative to the center, offset
+ * toward the player's lower-left in their reading frame. The offset is small
+ * enough to stay inside the wedge for both 3P (120°) and 5P (72°). */
+.panel[data-radial="1"] .history-btn {
+  bottom: auto;
+  left: 50%;
+  top: 50%;
+  right: auto;
+  /* Center the button at (panel-inner-center) + (-6vmin, +10vmin), which in
+   * the rotated player frame lands at the player's lower-left of the number. */
+  transform: translate(-50%, -50%) translate(-6vmin, 10vmin);
+}
 
 /* === Menu pill === */
 
 .menu-pill {
   position: absolute;
-  z-index: 5;
-  /* Default position: top-center of the screen between rows */
+  z-index: 6;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 .menu-pill * { pointer-events: auto; }
-
-/* For player counts that have a clear horizontal gutter, sit on the gutter line.
-   2P/3P/4P/5P all have a horizontal gutter at 50%; the centered default works. */
 
 .menu-toggle {
   display: inline-flex;
@@ -224,7 +315,7 @@
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 18px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 .menu-popover {
@@ -282,6 +373,40 @@
   color: #fff;
   font-weight: 600;
   font-size: 14px;
+}
+
+/* === Starting-life stepper === */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--menu-bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px;
+}
+.stepper button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--button-bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 36px;
+  border: 1px solid transparent;
+}
+.stepper button:active {
+  background: var(--button-bg-active);
+  color: var(--panel-bg);
+}
+.stepper-value {
+  min-width: 40px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  padding: 0 4px;
 }
 
 /* === Log popover === */
@@ -409,10 +534,6 @@
 .modal-danger { background: var(--accent-neg); color: #fff; }
 
 /* === Hint banner === */
-/* Sits above the cb-badge (which is bottom-right, ~120px wide).
-   On installed PWA (standalone display mode) the cb-badge is dimmed,
-   so the banner can run wider — we still anchor away from the badge
-   to keep the dismiss button reliably tappable. */
 .hint-banner {
   position: absolute;
   left: 8px;
@@ -428,7 +549,7 @@
   font-size: 12px;
   color: var(--text);
   z-index: 4;
-  max-width: calc(100vw - 160px); /* leave room for cb-badge bottom-right */
+  max-width: calc(100vw - 160px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .hint-banner button {
