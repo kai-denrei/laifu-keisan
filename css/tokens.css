@@ -108,32 +108,32 @@
  * inks. Serif display. WCAG AA-large holds.
  */
 [data-skin="heroic-fantasy"] {
-  --bg: #2a1d10;                 /* old leather gutter */
-  --panel-bg: #efe2c4;
-  --panel-bg-alt: #e5d4ad;
-  --text: #1f160a;
-  --text-dim: #6a5634;
-  --accent-pos: #6e8a4c;         /* moss green hit */
-  --accent-neg: #9c3b2c;         /* iron oxide hit */
-  --border: #5e4218;
+  --bg: #14110a;                 /* deep charred wood */
+  --panel-bg: #382816;
+  --panel-bg-alt: #2e2113;
+  --text: #d4c39c;               /* candle-cream — for dark surfaces */
+  --text-dim: #7a6044;
+  --accent-pos: #5d7a36;         /* mossy bronze-green */
+  --accent-neg: #7d2b1f;         /* oxblood */
+  --border: #0e0905;
   --font-display: var(--font-serif);
   --font-ui: var(--font-serif);
-  --shadow-ink: none;
-  --menu-bg: #efe2c4;
-  --menu-bg-soft: #d9c69f;
-  --modal-overlay: rgba(42, 29, 16, 0.6);
-  --button-bg: #d9c69f;
-  --button-bg-active: #5e4218;
+  --shadow-ink: 0 1px 0 rgba(0,0,0,0.5);
+  --menu-bg: #382816;
+  --menu-bg-soft: #4a3520;
+  --modal-overlay: rgba(20, 14, 6, 0.78);
+  --button-bg: #4a3520;
+  --button-bg-active: #d4c39c;
 
-  /* Per-player heraldic palette */
-  --p1-bg: #c0d2a7;              /* muted heraldic green */
-  --p1-fg: #1f3010;
-  --p2-bg: #d6a499;              /* muted heraldic red */
-  --p2-fg: #3d130a;
-  --p3-bg: #a8bbd3;              /* muted heraldic blue */
-  --p3-fg: #11254a;
-  --p4-bg: #f1e8d0;              /* parchment white */
-  --p4-fg: #1f160a;
-  --p5-bg: #2a241e;              /* heraldic black */
-  --p5-fg: #efe2c4;
+  /* Per-player heraldic palette — darker, gritty, weathered */
+  --p1-bg: #3d5236;              /* deep forest, oxidised bronze */
+  --p1-fg: #d4c39c;
+  --p2-bg: #5a2218;              /* oxblood, dried-iron */
+  --p2-fg: #d4c39c;
+  --p3-bg: #1f3047;              /* deep midnight, sapphire-tarnished */
+  --p3-fg: #d4c39c;
+  --p4-bg: #b8a070;              /* stained parchment, tobacco-aged */
+  --p4-fg: #1a1208;
+  --p5-bg: #18130d;              /* charcoal, soot-black */
+  --p5-fg: #d4c39c;
 }

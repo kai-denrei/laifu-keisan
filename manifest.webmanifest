@@ -1,6 +1,6 @@
 {
-  "name": "Tabletop Life Counter",
-  "short_name": "Life",
+  "name": "laifukeisan",
+  "short_name": "laifukeisan",
   "start_url": "./?src=pwa",
   "scope": "./",
   "display": "fullscreen",
