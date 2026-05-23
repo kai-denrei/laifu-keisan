@@ -1,1 +1,87 @@
-/* tokens.css — design tokens; one block per skin via :root[data-skin="..."]. See spec §Skins. */
+/* tokens.css — design tokens; one block per skin via [data-skin="..."].
+ *
+ * Token contract (every skin defines all of these):
+ *   --bg                background of the whole board (between panels)
+ *   --panel-bg          per-panel default background
+ *   --panel-bg-alt      optional per-seat tint (player 2 / 4 etc.)
+ *   --text              primary text color (the life number)
+ *   --text-dim          dim text (log timestamps, menu labels)
+ *   --accent-pos        the "+" zone highlight on press
+ *   --accent-neg        the "−" zone highlight on press
+ *   --border            hairline gutter between panels
+ *   --font-display      the big numerals
+ *   --font-ui           menu / log / hint text
+ *   --frame             optional decorative frame layer (skin uses or ignores)
+ *   --shadow-ink        glow / shadow under the number for legibility
+ */
+
+/* ===== System font stacks (no web fonts, no network) ===== */
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+}
+
+/* ===== PASTEL (default) ===== */
+:root,
+[data-skin="pastel"] {
+  --bg: #f4ede0;                 /* warm parchment-cream */
+  --panel-bg: #fff9ee;
+  --panel-bg-alt: #ecdfc9;       /* player 2 / 4 differentiation */
+  --text: #1c1a16;
+  --text-dim: #6e655a;
+  --accent-pos: #b9e3b6;         /* soft green */
+  --accent-neg: #f3b7b0;         /* soft coral */
+  --border: #d8cdb8;
+  --font-display: var(--font-system);
+  --font-ui: var(--font-system);
+  --frame: none;
+  --shadow-ink: none;
+  --menu-bg: #fff9ee;
+  --menu-bg-soft: #f4ede0;
+  --modal-overlay: rgba(28, 26, 22, 0.45);
+  --button-bg: #ecdfc9;
+  --button-bg-active: #b9a888;
+}
+
+/* ===== CYBERPUNK ===== */
+[data-skin="cyberpunk"] {
+  --bg: #05060c;
+  --panel-bg: #0c0e1a;
+  --panel-bg-alt: #0e1226;
+  --text: #f5fbff;
+  --text-dim: #6a7895;
+  --accent-pos: #1bf0c8;         /* neon teal */
+  --accent-neg: #ff3d80;         /* neon magenta */
+  --border: #1a2238;
+  --font-display: var(--font-mono);
+  --font-ui: var(--font-mono);
+  --frame: cyber;
+  --shadow-ink: 0 0 18px rgba(27, 240, 200, 0.18);
+  --menu-bg: #0c0e1a;
+  --menu-bg-soft: #131730;
+  --modal-overlay: rgba(0, 0, 0, 0.78);
+  --button-bg: #131730;
+  --button-bg-active: #1bf0c8;
+}
+
+/* ===== HEROIC FANTASY ===== */
+[data-skin="heroic-fantasy"] {
+  --bg: #2a1d10;                 /* old leather */
+  --panel-bg: #efe2c4;            /* parchment */
+  --panel-bg-alt: #e5d4ad;
+  --text: #1f160a;
+  --text-dim: #6a5634;
+  --accent-pos: #8baf65;         /* moss green */
+  --accent-neg: #b04a3a;         /* iron oxide */
+  --border: #5e4218;
+  --font-display: var(--font-serif);
+  --font-ui: var(--font-serif);
+  --frame: heroic;
+  --shadow-ink: none;
+  --menu-bg: #efe2c4;
+  --menu-bg-soft: #d9c69f;
+  --modal-overlay: rgba(42, 29, 16, 0.6);
+  --button-bg: #d9c69f;
+  --button-bg-active: #5e4218;
+}

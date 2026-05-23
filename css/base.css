@@ -1,1 +1,82 @@
-/* base.css — reset, body defaults, kill accidental input (touch-action, user-select, overscroll-behavior). */
+/* base.css — reset, body defaults, kill accidental input. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg, #111);
+  color: var(--text, #eee);
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Kill accidental input — the heart of "no misfires" on a flat phone. */
+html, body {
+  touch-action: manipulation;          /* no double-tap zoom */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;           /* no pull-to-refresh */
+}
+
+body {
+  /* iOS notch / safe area */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Suppress context menu / image callout */
+img, button, .panel {
+  -webkit-touch-callout: none;
+}
+
+/* All buttons reset */
+button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus { outline: none; }
+button:focus-visible { outline: 2px solid var(--text-dim, #888); outline-offset: 2px; }
+
+/* Suppress text selection everywhere — players should not be highlighting numbers */
+* { -webkit-user-select: none; user-select: none; }
+
+/* Suppress context menu on long-press where possible. We additionally kill it
+   via JS pointerdown.preventDefault in input.js for the zones. */
+.panel, .zone, .life, .delta { -webkit-touch-callout: none; }
+
+/* CRITICAL: `display: flex` in component CSS overrides the [hidden] attribute's
+   default `display: none`. This rule restores hidden semantics for all our
+   dynamic overlays. */
+[hidden] { display: none !important; }
+
+/* The board itself */
+#board {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: grid;
+  /* layout.css sets grid-template-* per data-player-count */
+  background: var(--bg);
+}
+
+/* Hide the cache-bust corner badge in standalone (installed) display mode —
+   it's a dev/sanity affordance, not for end users on their home screen. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  #cb-badge { opacity: 0.18; }
+  #cb-badge:hover { opacity: 1; }
+}

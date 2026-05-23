@@ -1,20 +1,24 @@
-const CB_TOKEN = "5ae02070";
+const CB_TOKEN = "34092e3a";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const PRECACHE = [
-  "/",
-  "/index.html",
-  "/manifest.webmanifest",
-  `/css/tokens.css?v=${CB_TOKEN}`,
-  `/css/base.css?v=${CB_TOKEN}`,
-  `/css/layout.css?v=${CB_TOKEN}`,
-  `/css/skins.css?v=${CB_TOKEN}`,
-  `/js/main.js?v=${CB_TOKEN}`,
-  `/js/state.js?v=${CB_TOKEN}`,
-  `/js/render.js?v=${CB_TOKEN}`,
-  `/js/input.js?v=${CB_TOKEN}`,
-  `/js/wakelock.js?v=${CB_TOKEN}`,
-  `/js/skins.js?v=${CB_TOKEN}`,
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  `./css/tokens.css?v=${CB_TOKEN}`,
+  `./css/base.css?v=${CB_TOKEN}`,
+  `./css/layout.css?v=${CB_TOKEN}`,
+  `./css/skins.css?v=${CB_TOKEN}`,
+  `./js/main.js?v=${CB_TOKEN}`,
+  `./js/state.js?v=${CB_TOKEN}`,
+  `./js/render.js?v=${CB_TOKEN}`,
+  `./js/input.js?v=${CB_TOKEN}`,
+  `./js/wakelock.js?v=${CB_TOKEN}`,
+  `./js/skins.js?v=${CB_TOKEN}`,
+  `./cb-badge.js?v=${CB_TOKEN}`,
+  `./icons/apple-touch-icon.png?v=${CB_TOKEN}`,
+  `./icons/icon-192.png?v=${CB_TOKEN}`,
+  `./icons/icon-512.png?v=${CB_TOKEN}`,
 ];
 
 self.addEventListener("install", (event) => {
