@@ -1,4 +1,4 @@
-const CB_TOKEN = "6f935626";
+const CB_TOKEN = "e0edce1a";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const BADGE_CELLS = [0, 1, 2].map(i =>
@@ -82,14 +82,21 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   event.respondWith((async () => {
-    // 1. Navigation requests use NETWORK-FIRST with a 2s timeout.
-    //    Online users always get the freshest HTML (so a new build's token
-    //    propagates immediately), refilling the cache as a side-effect. Slow
-    //    or offline network → fall back to cached document so the PWA still
-    //    boots in airplane mode. Cache-busted ?v=<token> assets stay
-    //    cache-first via path (2) below since the URL itself changes per
-    //    build — the navigation cache hole was the real source of staleness.
-    if (req.mode === "navigate") {
+    // 1. Navigation requests AND bare same-origin asset URLs (no ?v= query)
+    //    use NETWORK-FIRST with a 2s timeout. The bare-URL case covers ES
+    //    module imports: `import "./state.js"` from `main.js?v=NEW` strips
+    //    the query when resolving, so the SW must NOT serve an exact-match
+    //    cached OLD `./state.js` against a request from new code — that's
+    //    the version-skew hole that ships an old `state.js` next to a new
+    //    `main.js` and silently breaks `import { SLIDERS } from ...`.
+    //    Fingerprinted `?v=<token>` URLs keep their cache-first treatment
+    //    below since the URL itself changes per build.
+    const reqUrl = new URL(req.url);
+    const sameOrigin = reqUrl.origin === self.location.origin;
+    const isBareAsset = sameOrigin && !reqUrl.search &&
+      /\.(?:js|mjs|css|webmanifest)$/i.test(reqUrl.pathname);
+
+    if (req.mode === "navigate" || isBareAsset) {
       try {
         const fresh = await Promise.race([
           fetch(req),
@@ -101,12 +108,21 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((c) => c.put(req, fresh.clone())).catch(() => {});
         return fresh;
       } catch (e) {
-        const cached =
-          (await caches.match(req)) ||
-          (await caches.match("./?src=pwa")) ||
-          (await caches.match("./index.html")) ||
-          (await caches.match("./"));
-        if (cached) return cached;
+        // Try exact cache first for either request kind.
+        const exactCached = await caches.match(req);
+        if (exactCached) return exactCached;
+        // Only navigation falls back to the cached HTML shell —
+        // returning HTML to a JS/CSS request would break imports.
+        if (req.mode === "navigate") {
+          const cached =
+            (await caches.match("./?src=pwa")) ||
+            (await caches.match("./index.html")) ||
+            (await caches.match("./"));
+          if (cached) return cached;
+        }
+        // Bare-asset offline miss → try query-loose match before giving up.
+        const loose = await caches.match(req, { ignoreSearch: true });
+        if (loose) return loose;
         return new Response("offline", {
           status: 504,
           statusText: "Gateway Timeout (offline)",
