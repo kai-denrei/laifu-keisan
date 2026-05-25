@@ -21,17 +21,18 @@
 // "seven-seg". Listens for `lifechange` + `life-preview` events from
 // input.js to refresh per-panel values.
 
-const SEGMENTS_FOR_DIGIT = {
-  0: ["a", "b", "c", "d", "e", "f"],
-  1: ["b", "c"],
-  2: ["a", "b", "g", "e", "d"],
-  3: ["a", "b", "g", "c", "d"],
-  4: ["f", "g", "b", "c"],
-  5: ["a", "f", "g", "c", "d"],
-  6: ["a", "f", "g", "e", "c", "d"],
-  7: ["a", "b", "c"],
-  8: ["a", "b", "c", "d", "e", "f", "g"],
-  9: ["a", "b", "c", "d", "f", "g"],
+const SEGMENTS_FOR_CHAR = {
+  "0": ["a", "b", "c", "d", "e", "f"],
+  "1": ["b", "c"],
+  "2": ["a", "b", "g", "e", "d"],
+  "3": ["a", "b", "g", "c", "d"],
+  "4": ["f", "g", "b", "c"],
+  "5": ["a", "f", "g", "c", "d"],
+  "6": ["a", "f", "g", "e", "c", "d"],
+  "7": ["a", "b", "c"],
+  "8": ["a", "b", "c", "d", "e", "f", "g"],
+  "9": ["a", "b", "c", "d", "f", "g"],
+  "-": ["g"],  // minus sign — only the middle bar, classic 7-seg negative
 };
 const ALL_SEGMENTS = ["a", "b", "c", "d", "e", "f", "g"];
 
@@ -274,8 +275,7 @@ function drawSegment(ctx, x1, y1, x2, y2, thickness, color, brightness, isOn) {
 
 function drawDigit(ctx, digitChar, x, y, w, h, color, panelSeed) {
   const t = w * DEFAULTS.segmentThickness;
-  const digit = parseInt(digitChar, 10);
-  const onSet = new Set(Number.isFinite(digit) ? SEGMENTS_FOR_DIGIT[digit] || [] : []);
+  const onSet = new Set(SEGMENTS_FOR_CHAR[digitChar] || []);
 
   ctx.save();
   ctx.translate(x, y);
