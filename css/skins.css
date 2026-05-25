@@ -167,9 +167,50 @@
   border: 1px solid var(--border);
 }
 
-/* ===== 7-Segment — retro CRT glyphs ===== */
+/* ===== 7-Segment — retro CRT glyphs =====
+ * Lightweight CRT overlay: horizontal scanlines, corner vignette, and a
+ * very subtle flicker animation. CSS-only, GPU-compositor friendly.
+ * Z-indexed at 5 so it sits above the canvas (4) and the panels but
+ * below the menu-pill (6) — settings stay crisp, the main view feels
+ * like a tube display.
+ */
 [data-skin="seven-seg"] body {
   background: var(--bg);
+}
+[data-skin="seven-seg"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background:
+    /* horizontal scanlines */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.045) 0 1px,
+      transparent 1px 3px
+    ),
+    /* faint vertical aperture-grille hint */
+    repeating-linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.04) 0 1px,
+      transparent 1px 2px
+    ),
+    /* corner vignette */
+    radial-gradient(
+      ellipse 120% 100% at center,
+      transparent 55%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+  mix-blend-mode: normal;
+  animation: crt-flicker 4.5s steps(60) infinite;
+}
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  37%      { opacity: 0.96; }
+  39%      { opacity: 1.00; }
+  73%      { opacity: 0.97; }
+  75%      { opacity: 1.00; }
 }
 [data-skin="seven-seg"] .panel {
   border: 0;
