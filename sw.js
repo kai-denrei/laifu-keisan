@@ -1,4 +1,4 @@
-const CB_TOKEN = "47dc7fda";
+const CB_TOKEN = "01771b30";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const BADGE_CELLS = [0, 1, 2].map(i =>
@@ -82,20 +82,43 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   event.respondWith((async () => {
-    // 1. Exact cache hit — fastest path, preserves cache-busting semantics
-    //    (different ?v= = different URL = different cache entry).
+    // 1. Navigation requests use NETWORK-FIRST with a 2s timeout.
+    //    Online users always get the freshest HTML (so a new build's token
+    //    propagates immediately), refilling the cache as a side-effect. Slow
+    //    or offline network → fall back to cached document so the PWA still
+    //    boots in airplane mode. Cache-busted ?v=<token> assets stay
+    //    cache-first via path (2) below since the URL itself changes per
+    //    build — the navigation cache hole was the real source of staleness.
+    if (req.mode === "navigate") {
+      try {
+        const fresh = await Promise.race([
+          fetch(req),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("nav-timeout")), 2000)
+          ),
+        ]);
+        // Refresh cache in the background; don't block the response on it.
+        caches.open(CACHE_NAME).then((c) => c.put(req, fresh.clone())).catch(() => {});
+        return fresh;
+      } catch (e) {
+        const cached =
+          (await caches.match(req)) ||
+          (await caches.match("./?src=pwa")) ||
+          (await caches.match("./index.html")) ||
+          (await caches.match("./"));
+        if (cached) return cached;
+        return new Response("offline", {
+          status: 504,
+          statusText: "Gateway Timeout (offline)",
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+    }
+
+    // 2. Non-navigation: exact cache hit — fastest path, preserves cache-
+    //    busting semantics (different ?v= = different URL = different entry).
     let resp = await caches.match(req);
     if (resp) return resp;
-
-    // 2. Navigation request: fall back to a cached document so the app boots
-    //    even on an unfamiliar path or query (e.g. ?src=pwa not precached,
-    //    or a future start_url change).
-    if (req.mode === "navigate") {
-      resp = (await caches.match("./?src=pwa")) ||
-             (await caches.match("./index.html")) ||
-             (await caches.match("./"));
-      if (resp) return resp;
-    }
 
     // 3. Try network; if offline, fall back to a query-loose cache match so
     //    a stale build's assets still resolve.

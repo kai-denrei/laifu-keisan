@@ -39,6 +39,7 @@ const DEFAULTS = {
   segmentThickness: 0.14,   // fraction of digit width
   digitAspect: 1.7,         // height / width — taller looks more retro
   digitGap: 0.18,           // gap between digits as fraction of digit width
+  digitScale: 0.55,         // scale applied after bbox-fit (smaller = neater)
   glowBlur: 16,             // shadow blur in CSS px for the outer halo
   innerGlowBlur: 4,
   ghostAlpha: 0.06,         // visibility of "off" segments
@@ -251,6 +252,10 @@ function loop() {
       digitHeight = p.bbox.height;
       digitWidth = digitHeight / DEFAULTS.digitAspect;
     }
+    // Apply the global digitScale so the digits sit smaller inside the
+    // available bbox — leaves room for the bloom/halo without dominating.
+    digitWidth *= DEFAULTS.digitScale;
+    digitHeight *= DEFAULTS.digitScale;
     const gapPx = digitWidth * gapFactor;
     const totalWidth = n * digitWidth + (n - 1) * gapPx;
 
