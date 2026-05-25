@@ -174,3 +174,39 @@
   --p5-fg: #ff1744;              /* alert red */
 }
 
+/* ===== 7-SEGMENT — retro CRT display =====
+ * Glowing 7-segment glyphs on a deep black surface. Each player has its
+ * own glyph colour; the CRT bloom effect comes from multi-pass shadowBlur
+ * in js/sevenseg.js, so the tokens here only carry the per-player hues.
+ */
+[data-skin="seven-seg"] {
+  --bg: #050608;                 /* deep CRT off-pixel black */
+  --panel-bg: transparent;
+  --panel-bg-alt: transparent;
+  --text: #d8dde8;
+  --text-dim: #5b6271;
+  --accent-pos: #00ff88;
+  --accent-neg: #ff2a2a;
+  --border: rgba(80, 90, 110, 0.20);
+  --font-display: var(--font-mono);
+  --font-ui: var(--font-mono);
+  --shadow-ink: none;
+  --menu-bg: #0c0e16;
+  --menu-bg-soft: #161922;
+  --modal-overlay: rgba(5, 6, 8, 0.88);
+  --button-bg: #161922;
+  --button-bg-active: #ff2a2a;
+
+  /* Per-player CRT phosphor colours */
+  --p1-bg: transparent;
+  --p1-fg: #ff2030;              /* P1 red */
+  --p2-bg: transparent;
+  --p2-fg: #2cff5c;              /* P2 green */
+  --p3-bg: transparent;
+  --p3-fg: #f4f8ff;              /* P3 white */
+  --p4-bg: transparent;
+  --p4-fg: #ff8a1a;              /* P4 orange */
+  --p5-bg: transparent;
+  --p5-fg: #2a8cff;              /* P5 blue */
+}
+

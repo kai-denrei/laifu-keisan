@@ -166,3 +166,55 @@
   background: var(--menu-bg-soft);
   border: 1px solid var(--border);
 }
+
+/* ===== 7-Segment — retro CRT glyphs ===== */
+[data-skin="seven-seg"] body {
+  background: var(--bg);
+}
+[data-skin="seven-seg"] .panel {
+  border: 0;
+  background: transparent;
+}
+[data-skin="seven-seg"] .panel-inner .life {
+  /* .life kept in DOM for its bbox + computed font; rendered invisible.
+     js/sevenseg.js draws glowing 7-segment digits where the text would be. */
+  color: transparent;
+  text-shadow: none;
+}
+[data-skin="seven-seg"] .panel::after {
+  display: none !important;
+}
+[data-skin="seven-seg"] .menu-pill .menu-toggle {
+  background: var(--menu-bg-soft);
+  border: 1px solid rgba(255, 32, 48, 0.35);
+  color: var(--p1-fg);
+}
+[data-skin="seven-seg"] .menu-popover {
+  background: var(--menu-bg);
+  border: 1px solid rgba(255, 32, 48, 0.25);
+  color: var(--text);
+  box-shadow: 0 0 24px rgba(255, 32, 48, 0.10);
+}
+[data-skin="seven-seg"] .menu-label,
+[data-skin="seven-seg"] .stepper-value,
+[data-skin="seven-seg"] .build-badge,
+[data-skin="seven-seg"] .build-badge-hex {
+  color: var(--text);
+}
+[data-skin="seven-seg"] .menu-choices button,
+[data-skin="seven-seg"] .stepper button,
+[data-skin="seven-seg"] .skin-grid button {
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+[data-skin="seven-seg"] .menu-choices button[data-active="1"],
+[data-skin="seven-seg"] .skin-grid button[data-active="1"] {
+  background: var(--p1-fg);
+  color: var(--bg);
+  font-weight: 700;
+}
+[data-skin="seven-seg"] .build-badge {
+  background: var(--menu-bg-soft);
+  border: 1px solid var(--border);
+}

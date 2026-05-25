@@ -7,6 +7,7 @@ import { applySkin } from "./skins.js";
 import { acquire, bindVisibilityReacquire } from "./wakelock.js";
 import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels } from "./particles.js";
 import { mountDevSliders, unmountDevSliders } from "./dev-sliders.js";
+import { startSevenSeg, stopSevenSeg, refreshPanels as refreshSevenSegPanels } from "./sevenseg.js";
 
 // 1. Restore-or-new.
 let state = loadState() || createState();
@@ -60,28 +61,41 @@ window.addEventListener("orientationchange", onResize);
 // The body[data-skin] attribute is the source of truth; applySkin updates it.
 // A MutationObserver reacts to skin changes from the menu without weaving
 // start/stop calls into every code path that touches skin.
-function syncParticlesWithSkin() {
+function syncSkinRenderer() {
   const skin = document.body.getAttribute("data-skin");
+  // Particles (Ryūshi)
   if (skin === "particles") {
+    stopSevenSeg();
     startParticles();
     mountDevSliders(
       (key, value) => updateParticleConfig({ [key]: value }),
       getParticleFps,
     );
+  // 7-segment (Retro)
+  } else if (skin === "seven-seg") {
+    stopParticles();
+    unmountDevSliders();
+    startSevenSeg();
+  // Static skins
   } else {
     stopParticles();
+    stopSevenSeg();
     unmountDevSliders();
   }
 }
-syncParticlesWithSkin();
-new MutationObserver(syncParticlesWithSkin).observe(document.body, {
+syncSkinRenderer();
+new MutationObserver(syncSkinRenderer).observe(document.body, {
   attributes: true,
   attributeFilter: ["data-skin"],
 });
-// Layout changes (player count, layoutVariant) move .life bboxes; re-sample.
+// Layout changes (player count, layoutVariant) move .life bboxes; re-sample
+// in whichever canvas renderer is active.
 document.addEventListener("layout-change", () => {
-  if (document.body.getAttribute("data-skin") === "particles") {
+  const skin = document.body.getAttribute("data-skin");
+  if (skin === "particles") {
     requestAnimationFrame(() => refreshParticlePanels());
+  } else if (skin === "seven-seg") {
+    requestAnimationFrame(() => refreshSevenSegPanels());
   }
 });
 
