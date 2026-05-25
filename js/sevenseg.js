@@ -35,18 +35,19 @@ const SEGMENTS_FOR_DIGIT = {
 };
 const ALL_SEGMENTS = ["a", "b", "c", "d", "e", "f", "g"];
 
+// Defaults locked in by Gerald 2026-05-25 after live tuning via ?admin sliders.
 const DEFAULTS = {
-  segmentThickness: 0.14,   // fraction of digit width
-  digitAspect: 1.7,         // height / width — taller looks more retro
-  digitGap: 0.18,           // gap between digits as fraction of digit width
-  digitScale: 0.55,         // scale applied after bbox-fit (smaller = neater)
-  glowBlur: 16,             // shadow blur in CSS px for the outer halo
-  innerGlowBlur: 4,
-  ghostAlpha: 0.06,         // visibility of "off" segments
-  jitterAmount: 0.25,       // 0-1, how much per-segment brightness varies
-  bloomAlpha: 0.10,         // faint rect bloom drawn behind each segment
-  coreWhite: 0.45,          // 0-1, opacity of the white "hot core" inside each segment
-  coreThickness: 0.40,      // 0.1-0.9, white-core hex thickness as fraction of segment thickness
+  digitScale: 0.55,
+  segmentThickness: 0.18,
+  digitAspect: 1.7,
+  digitGap: 0.25,
+  glowBlur: 25,
+  innerGlowBlur: 4,         // not exposed in sliders; tracks glowBlur visually
+  ghostAlpha: 0.06,
+  jitterAmount: 0.5,
+  bloomAlpha: 0.10,         // not exposed in sliders
+  coreWhite: 1,
+  coreThickness: 0.7,
 };
 
 const STATE = {
@@ -88,18 +89,18 @@ export function getFps() {
 
 export const SLIDERS = [
   { key: "digitScale", label: "Digit scale", min: 0.30, max: 1.00, step: 0.02, default: 0.55 },
-  { key: "segmentThickness", label: "Segment thickness", min: 0.08, max: 0.28, step: 0.01, default: 0.14 },
+  { key: "segmentThickness", label: "Segment thickness", min: 0.08, max: 0.28, step: 0.01, default: 0.18 },
   { key: "digitAspect", label: "Digit aspect (h/w)", min: 1.3, max: 2.2, step: 0.05, default: 1.7 },
-  { key: "digitGap", label: "Digit gap", min: 0.05, max: 0.40, step: 0.01, default: 0.18 },
-  { key: "glowBlur", label: "Glow blur (px)", min: 0, max: 40, step: 1, default: 16 },
+  { key: "digitGap", label: "Digit gap", min: 0.05, max: 0.40, step: 0.01, default: 0.25 },
+  { key: "glowBlur", label: "Glow blur (px)", min: 0, max: 40, step: 1, default: 25 },
   { key: "ghostAlpha", label: "Ghost segment α", min: 0, max: 0.30, step: 0.005, default: 0.06 },
-  { key: "jitterAmount", label: "Brightness jitter", min: 0, max: 0.50, step: 0.01, default: 0.25 },
-  { key: "coreWhite", label: "Hot-core white α", min: 0, max: 1.0, step: 0.02, default: 0.45 },
-  { key: "coreThickness", label: "Hot-core thickness", min: 0.10, max: 0.90, step: 0.02, default: 0.40 },
-  { key: "scanlineAlpha", label: "CRT scanlines α", min: 0, max: 0.90, step: 0.02, default: 0.45 },
-  { key: "vgrilleAlpha", label: "CRT aperture α", min: 0, max: 0.80, step: 0.02, default: 0.30 },
-  { key: "vignetteAlpha", label: "CRT vignette α", min: 0, max: 1.0, step: 0.02, default: 0.55 },
-  { key: "flickerDuration", label: "CRT flicker (s, 0=off)", min: 0, max: 10, step: 0.5, default: 4.5 },
+  { key: "jitterAmount", label: "Brightness jitter", min: 0, max: 0.50, step: 0.01, default: 0.5 },
+  { key: "coreWhite", label: "Hot-core white α", min: 0, max: 1.0, step: 0.02, default: 1 },
+  { key: "coreThickness", label: "Hot-core thickness", min: 0.10, max: 0.90, step: 0.02, default: 0.7 },
+  { key: "scanlineAlpha", label: "CRT scanlines α", min: 0, max: 0.90, step: 0.02, default: 0.14 },
+  { key: "vgrilleAlpha", label: "CRT aperture α", min: 0, max: 0.80, step: 0.02, default: 0 },
+  { key: "vignetteAlpha", label: "CRT vignette α", min: 0, max: 1.0, step: 0.02, default: 0 },
+  { key: "flickerDuration", label: "CRT flicker (s, 0=off)", min: 0, max: 10, step: 0.5, default: 0 },
 ];
 
 export function startSevenSeg() {
