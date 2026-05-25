@@ -45,6 +45,8 @@ const DEFAULTS = {
   ghostAlpha: 0.06,         // visibility of "off" segments
   jitterAmount: 0.25,       // 0-1, how much per-segment brightness varies
   bloomAlpha: 0.10,         // faint rect bloom drawn behind each segment
+  coreWhite: 0.45,          // 0-1, opacity of the white "hot core" inside each segment
+  coreThickness: 0.40,      // 0.1-0.9, white-core hex thickness as fraction of segment thickness
 };
 
 const STATE = {
@@ -92,8 +94,10 @@ export const SLIDERS = [
   { key: "glowBlur", label: "Glow blur (px)", min: 0, max: 40, step: 1, default: 16 },
   { key: "ghostAlpha", label: "Ghost segment α", min: 0, max: 0.30, step: 0.005, default: 0.06 },
   { key: "jitterAmount", label: "Brightness jitter", min: 0, max: 0.50, step: 0.01, default: 0.25 },
-  { key: "scanlineAlpha", label: "CRT scanlines α", min: 0, max: 0.20, step: 0.005, default: 0.045 },
-  { key: "vgrilleAlpha", label: "CRT aperture α", min: 0, max: 0.20, step: 0.005, default: 0.04 },
+  { key: "coreWhite", label: "Hot-core white α", min: 0, max: 1.0, step: 0.02, default: 0.45 },
+  { key: "coreThickness", label: "Hot-core thickness", min: 0.10, max: 0.90, step: 0.02, default: 0.40 },
+  { key: "scanlineAlpha", label: "CRT scanlines α", min: 0, max: 0.90, step: 0.02, default: 0.45 },
+  { key: "vgrilleAlpha", label: "CRT aperture α", min: 0, max: 0.80, step: 0.02, default: 0.30 },
   { key: "vignetteAlpha", label: "CRT vignette α", min: 0, max: 1.0, step: 0.02, default: 0.55 },
   { key: "flickerDuration", label: "CRT flicker (s, 0=off)", min: 0, max: 10, step: 0.5, default: 4.5 },
 ];
@@ -253,6 +257,15 @@ function drawSegment(ctx, x1, y1, x2, y2, thickness, color, brightness, isOn) {
   ctx.globalAlpha = Math.min(1, brightness);
   ctx.shadowBlur = 0;
   ctx.fill();
+
+  // 3. White "hot core" — thinner hex on top, Apollo-VFD overexposure look.
+  //    Controlled by the coreWhite + coreThickness sliders.
+  if (DEFAULTS.coreWhite > 0) {
+    ctx.globalAlpha = Math.min(1, DEFAULTS.coreWhite * brightness);
+    ctx.fillStyle = "#ffffff";
+    hexPath(ctx, x1, y1, x2, y2, thickness * DEFAULTS.coreThickness);
+    ctx.fill();
+  }
 
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;

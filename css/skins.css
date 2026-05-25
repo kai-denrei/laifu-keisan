@@ -184,25 +184,27 @@ body[data-skin="seven-seg"]::after {
   pointer-events: none;
   z-index: 5;
   background:
-    /* horizontal scanlines */
+    /* horizontal scanlines — BLACK so multiply leaves the black bg untouched
+       (anything × black = black) but darkens any lit digit underneath into
+       the classic CRT row pattern */
     repeating-linear-gradient(
       to bottom,
-      rgba(255, 255, 255, var(--crt-scanline-alpha, 0.045)) 0 1px,
+      rgba(0, 0, 0, var(--crt-scanline-alpha, 0.45)) 0 1px,
       transparent 1px 3px
     ),
-    /* faint vertical aperture-grille hint */
+    /* vertical aperture-grille hint — same logic, also black */
     repeating-linear-gradient(
       to right,
-      rgba(0, 0, 0, var(--crt-vgrille-alpha, 0.04)) 0 1px,
+      rgba(0, 0, 0, var(--crt-vgrille-alpha, 0.30)) 0 1px,
       transparent 1px 2px
     ),
-    /* corner vignette */
+    /* corner vignette — darkens edges if/when something there to darken */
     radial-gradient(
       ellipse 120% 100% at center,
       transparent 55%,
       rgba(0, 0, 0, var(--crt-vignette-alpha, 0.55)) 100%
     );
-  mix-blend-mode: normal;
+  mix-blend-mode: multiply;
   animation: crt-flicker var(--crt-flicker-duration, 4.5s) steps(60) infinite;
 }
 @keyframes crt-flicker {
