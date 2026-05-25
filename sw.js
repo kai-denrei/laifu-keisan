@@ -1,4 +1,4 @@
-const CB_TOKEN = "e0edce1a";
+const CB_TOKEN = "53678c0d";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const BADGE_CELLS = [0, 1, 2].map(i =>

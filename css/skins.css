@@ -11,7 +11,7 @@
 }
 
 /* ===== Cyberpunk — dark, neon, angular ===== */
-[data-skin="cyberpunk"] body {
+body[data-skin="cyberpunk"] {
   background:
     radial-gradient(1200px 600px at 50% 50%, rgba(27, 240, 200, 0.06), transparent 60%),
     var(--bg);
@@ -44,7 +44,7 @@
  * etched text-shadow. The noise ::after is pointer-events: none and
  * sits behind .panel-inner / .zone via z-index so taps still register.
  */
-[data-skin="heroic-fantasy"] body {
+body[data-skin="heroic-fantasy"] {
   background:
     repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 3px),
     var(--bg);
@@ -117,7 +117,7 @@
  * z-index 4 — above panels (z-index ≤ 3) but below the menu-pill (6)
  * and menu-backdrop (5) so settings remain interactive.
  */
-[data-skin="particles"] body {
+body[data-skin="particles"] {
   background: var(--bg);
 }
 [data-skin="particles"] .panel {
@@ -174,10 +174,10 @@
  * below the menu-pill (6) — settings stay crisp, the main view feels
  * like a tube display.
  */
-[data-skin="seven-seg"] body {
+body[data-skin="seven-seg"] {
   background: var(--bg);
 }
-[data-skin="seven-seg"] body::after {
+body[data-skin="seven-seg"]::after {
   content: "";
   position: fixed;
   inset: 0;
