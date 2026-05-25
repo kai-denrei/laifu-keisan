@@ -161,45 +161,55 @@ function segmentEndpoints(seg, w, h, t) {
   return [0, 0, 0, 0];
 }
 
+// Build a hexagonal polygon (pointed-tip elongated hexagon) from two endpoints
+// + thickness. Tips sit exactly at the endpoints; shoulders are inset by T/2
+// along the axis and offset by T/2 perpendicular. Adjacent segments meeting
+// at a digit corner leave a small notch — the classic VFD/LCD look from the
+// Marantz reference.
+function hexPath(ctx, x1, y1, x2, y2, thickness) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.001) return;
+  const ux = dx / len, uy = dy / len;     // axis unit
+  const px = -uy, py = ux;                // perpendicular unit (90° CW)
+  const h = thickness / 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);                                  // tip 1
+  ctx.lineTo(x1 + ux * h - px * h, y1 + uy * h - py * h); // upper-near shoulder
+  ctx.lineTo(x2 - ux * h - px * h, y2 - uy * h - py * h); // upper-far shoulder
+  ctx.lineTo(x2, y2);                                  // tip 2
+  ctx.lineTo(x2 - ux * h + px * h, y2 - uy * h + py * h); // lower-far shoulder
+  ctx.lineTo(x1 + ux * h + px * h, y1 + uy * h + py * h); // lower-near shoulder
+  ctx.closePath();
+}
+
 function drawSegment(ctx, x1, y1, x2, y2, thickness, color, brightness, isOn) {
   if (!isOn) {
-    // Ghost — barely visible, no glow.
+    // Ghost — single, barely visible fill.
     ctx.shadowBlur = 0;
     ctx.globalAlpha = DEFAULTS.ghostAlpha;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = thickness * 0.9;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
+    ctx.fillStyle = color;
+    hexPath(ctx, x1, y1, x2, y2, thickness * 0.92);
+    ctx.fill();
     ctx.globalAlpha = 1;
     return;
   }
 
-  ctx.lineCap = "round";
+  ctx.fillStyle = color;
   ctx.shadowColor = color;
-  ctx.strokeStyle = color;
 
-  // Outer halo — broad, low alpha.
+  // 1. Outer halo — same hex shape, big blur, half alpha.
   ctx.globalAlpha = 0.55 * brightness;
   ctx.shadowBlur = DEFAULTS.glowBlur;
-  ctx.lineWidth = thickness;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
+  hexPath(ctx, x1, y1, x2, y2, thickness);
+  ctx.fill();
 
-  // Inner glow — tighter, brighter.
-  ctx.globalAlpha = 0.85 * brightness;
-  ctx.shadowBlur = DEFAULTS.innerGlowBlur;
-  ctx.stroke();
-
-  // Crisp core — no shadow.
-  ctx.globalAlpha = Math.min(1, 1.0 * brightness);
+  // 2. Crisp inner core — no shadow, full alpha. The lack of overlap at
+  //    the pointed tips means corners don't get the double-alpha smudging
+  //    that rounded-cap strokes produced.
+  ctx.globalAlpha = Math.min(1, brightness);
   ctx.shadowBlur = 0;
-  ctx.lineWidth = thickness * 0.65;
-  ctx.stroke();
+  ctx.fill();
 
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
