@@ -187,23 +187,23 @@
     /* horizontal scanlines */
     repeating-linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.045) 0 1px,
+      rgba(255, 255, 255, var(--crt-scanline-alpha, 0.045)) 0 1px,
       transparent 1px 3px
     ),
     /* faint vertical aperture-grille hint */
     repeating-linear-gradient(
       to right,
-      rgba(0, 0, 0, 0.04) 0 1px,
+      rgba(0, 0, 0, var(--crt-vgrille-alpha, 0.04)) 0 1px,
       transparent 1px 2px
     ),
     /* corner vignette */
     radial-gradient(
       ellipse 120% 100% at center,
       transparent 55%,
-      rgba(0, 0, 0, 0.55) 100%
+      rgba(0, 0, 0, var(--crt-vignette-alpha, 0.55)) 100%
     );
   mix-blend-mode: normal;
-  animation: crt-flicker 4.5s steps(60) infinite;
+  animation: crt-flicker var(--crt-flicker-duration, 4.5s) steps(60) infinite;
 }
 @keyframes crt-flicker {
   0%, 100% { opacity: 1; }

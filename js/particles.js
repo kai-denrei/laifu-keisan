@@ -479,3 +479,14 @@ function loop(now) {
 export function getFps() {
   return STATE.fps;
 }
+
+export const SLIDERS = [
+  { key: "particlesPerDigit", label: "Particles / digit", min: 5, max: 500, step: 5, default: 300 },
+  { key: "particleSize", label: "Particle size (px)", min: 1, max: 8, step: 1, default: 1 },
+  { key: "driftAmp", label: "Drift amplitude", min: 0, max: 3, step: 0.1, default: 0.2 },
+  { key: "seekStrength", label: "Seek strength", min: 0.02, max: 0.8, step: 0.02, default: 0.6 },
+  { key: "burstVelocity", label: "Burst velocity", min: 20, max: 400, step: 10, default: 110 },
+  { key: "burstLifetime", label: "Burst lifetime (ms)", min: 40, max: 1500, step: 20, default: 80 },
+  { key: "flashDuration", label: "Glow duration (ms)", min: 40, max: 1500, step: 20, default: 740 },
+  { key: "burstFriction", label: "Burst friction", min: 0.70, max: 0.99, step: 0.01, default: 0.8 },
+];

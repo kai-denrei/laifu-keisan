@@ -53,7 +53,50 @@ const STATE = {
   panels: [],       // [{ playerId, bbox, rotation, color, value }]
   enabled: false,
   rafId: null,
+  fps: 0,
+  _frameCount: 0,
+  _frameWindowStart: 0,
 };
+
+// Keys that map to CSS variables on :root (CRT overlay knobs in skins.css).
+const CSS_VAR_KEYS = {
+  scanlineAlpha: "--crt-scanline-alpha",
+  vgrilleAlpha: "--crt-vgrille-alpha",
+  vignetteAlpha: "--crt-vignette-alpha",
+};
+
+export function updateConfig(patch) {
+  for (const [k, v] of Object.entries(patch)) {
+    if (k in CSS_VAR_KEYS) {
+      document.documentElement.style.setProperty(CSS_VAR_KEYS[k], String(v));
+    } else if (k === "flickerDuration") {
+      document.documentElement.style.setProperty(
+        "--crt-flicker-duration",
+        v > 0 ? v + "s" : "0s"
+      );
+    } else if (k in DEFAULTS) {
+      DEFAULTS[k] = v;
+    }
+  }
+}
+
+export function getFps() {
+  return STATE.fps;
+}
+
+export const SLIDERS = [
+  { key: "digitScale", label: "Digit scale", min: 0.30, max: 1.00, step: 0.02, default: 0.55 },
+  { key: "segmentThickness", label: "Segment thickness", min: 0.08, max: 0.28, step: 0.01, default: 0.14 },
+  { key: "digitAspect", label: "Digit aspect (h/w)", min: 1.3, max: 2.2, step: 0.05, default: 1.7 },
+  { key: "digitGap", label: "Digit gap", min: 0.05, max: 0.40, step: 0.01, default: 0.18 },
+  { key: "glowBlur", label: "Glow blur (px)", min: 0, max: 40, step: 1, default: 16 },
+  { key: "ghostAlpha", label: "Ghost segment α", min: 0, max: 0.30, step: 0.005, default: 0.06 },
+  { key: "jitterAmount", label: "Brightness jitter", min: 0, max: 0.50, step: 0.01, default: 0.25 },
+  { key: "scanlineAlpha", label: "CRT scanlines α", min: 0, max: 0.20, step: 0.005, default: 0.045 },
+  { key: "vgrilleAlpha", label: "CRT aperture α", min: 0, max: 0.20, step: 0.005, default: 0.04 },
+  { key: "vignetteAlpha", label: "CRT vignette α", min: 0, max: 1.0, step: 0.02, default: 0.55 },
+  { key: "flickerDuration", label: "CRT flicker (s, 0=off)", min: 0, max: 10, step: 0.5, default: 4.5 },
+];
 
 export function startSevenSeg() {
   if (STATE.enabled) return;
@@ -236,11 +279,22 @@ function drawDigit(ctx, digitChar, x, y, w, h, color, panelSeed) {
   ctx.restore();
 }
 
-function loop() {
+function loop(now) {
   if (!STATE.enabled) return;
   STATE.rafId = requestAnimationFrame(loop);
   const ctx = STATE.ctx;
   if (!ctx) return;
+
+  // FPS sample (rolling 500ms).
+  STATE._frameCount++;
+  const t = now || performance.now();
+  const winLen = t - STATE._frameWindowStart;
+  if (winLen >= 500) {
+    STATE.fps = Math.round((STATE._frameCount * 1000) / winLen);
+    STATE._frameCount = 0;
+    STATE._frameWindowStart = t;
+  }
+
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
   for (let i = 0; i < STATE.panels.length; i++) {

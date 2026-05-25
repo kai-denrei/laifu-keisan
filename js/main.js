@@ -5,9 +5,14 @@ import { render, computeRadialClipPaths } from "./render.js";
 import { bindInput } from "./input.js";
 import { applySkin } from "./skins.js";
 import { acquire, bindVisibilityReacquire } from "./wakelock.js";
-import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels } from "./particles.js";
+import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels, SLIDERS as PARTICLE_SLIDERS } from "./particles.js";
 import { mountDevSliders, unmountDevSliders } from "./dev-sliders.js";
-import { startSevenSeg, stopSevenSeg, refreshPanels as refreshSevenSegPanels } from "./sevenseg.js";
+import { startSevenSeg, stopSevenSeg, updateConfig as updateSevenSegConfig, getFps as getSevenSegFps, refreshPanels as refreshSevenSegPanels, SLIDERS as SEVENSEG_SLIDERS } from "./sevenseg.js";
+
+// Dev sliders are hidden behind `?admin` to keep them off prod for normal
+// users while staying one URL away for tuning. Presence-only flag — value
+// doesn't matter, so `?admin`, `?admin=1`, etc. all work.
+const IS_ADMIN = new URLSearchParams(window.location.search).has("admin");
 
 // 1. Restore-or-new.
 let state = loadState() || createState();
@@ -63,24 +68,35 @@ window.addEventListener("orientationchange", onResize);
 // start/stop calls into every code path that touches skin.
 function syncSkinRenderer() {
   const skin = document.body.getAttribute("data-skin");
+  unmountDevSliders();
   // Particles (Ryūshi)
   if (skin === "particles") {
     stopSevenSeg();
     startParticles();
-    mountDevSliders(
-      (key, value) => updateParticleConfig({ [key]: value }),
-      getParticleFps,
-    );
+    if (IS_ADMIN) {
+      mountDevSliders({
+        title: "Ryūshi · dev",
+        sliders: PARTICLE_SLIDERS,
+        onChange: (key, value) => updateParticleConfig({ [key]: value }),
+        getFps: getParticleFps,
+      });
+    }
   // 7-segment (Retro)
   } else if (skin === "seven-seg") {
     stopParticles();
-    unmountDevSliders();
     startSevenSeg();
+    if (IS_ADMIN) {
+      mountDevSliders({
+        title: "7-Seg · dev",
+        sliders: SEVENSEG_SLIDERS,
+        onChange: (key, value) => updateSevenSegConfig({ [key]: value }),
+        getFps: getSevenSegFps,
+      });
+    }
   // Static skins
   } else {
     stopParticles();
     stopSevenSeg();
-    unmountDevSliders();
   }
 }
 syncSkinRenderer();
