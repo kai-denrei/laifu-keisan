@@ -285,20 +285,47 @@
 .history-btn[hidden] { display: none !important; }
 
 /* Radial layouts: panel-inner is viewport-sized, so the bottom-edge offset
- * above would land outside the wedge. Anchor relative to viewport center
- * and push along the rotated y-axis (toward the player). Distance picked to
- * sit BELOW the centroid-positioned number, near the player's near edge but
- * still inside both 3P (120°) and 5P (72°) wedges. */
+ * above would land outside the wedge. Anchor at viewport center and push
+ * along the rotated y-axis (toward the player), out near the perimeter.
+ *
+ * The push distance is per-SEAT, not uniform: the bisector of the south seat
+ * (rotation 0°) points at the FAR (tall) viewport edge, so it can reach the
+ * tuned ~72vmin; the side seats' bisectors point at the NEAR (50vw) edge, so
+ * the same 72vmin shoots them clean off-screen. Each seat therefore caps its
+ * push at the distance to whichever viewport edge its bisector hits first,
+ * minus a button-clearance margin (≈36px horizontal, ≈22px vertical for the
+ * 56×28 button). On tall phones the south seat is unaffected; only the side
+ * seats that would overflow get pulled in. Reads vw/vh directly so it also
+ * adapts to landscape. */
 .panel[data-radial="1"] .history-btn {
   bottom: auto;
   left: 50%;
   top: 50%;
   right: auto;
-  transform: translate(-50%, -50%) translateY(72vmin);
 }
-#board[data-player-count="5"] .panel[data-radial="1"] .history-btn {
-  /* 5P wedges are narrower; the perimeter is closer along the bisector. */
-  transform: translate(-50%, -50%) translateY(64vmin);
+/* 3P — desired push 72vmin. sin120°=0.866, cos120°=0.5 for the side seats. */
+#board[data-player-count="3"] .panel[data-seat-rotation="0"] .history-btn {
+  transform: translate(-50%, -50%) translateY(min(72vmin, calc(50vh - 22px)));
+}
+#board[data-player-count="3"] .panel[data-seat-rotation="120"] .history-btn,
+#board[data-player-count="3"] .panel[data-seat-rotation="240"] .history-btn {
+  transform: translate(-50%, -50%)
+    translateY(min(72vmin, calc((50vw - 36px) / 0.866), calc((50vh - 22px) / 0.5)));
+}
+/* 5P — desired push 64vmin. Two side-seat families: 72°/288° (sin 0.951,
+ * cos 0.309) and 144°/216° (sin 0.588, cos 0.809). */
+#board[data-player-count="5"] .panel[data-seat-rotation="0"] .history-btn {
+  transform: translate(-50%, -50%) translateY(min(64vmin, calc(50vh - 22px)));
+}
+#board[data-player-count="5"] .panel[data-seat-rotation="72"] .history-btn,
+#board[data-player-count="5"] .panel[data-seat-rotation="288"] .history-btn {
+  transform: translate(-50%, -50%)
+    translateY(min(64vmin, calc((50vw - 36px) / 0.951), calc((50vh - 22px) / 0.309)));
+}
+#board[data-player-count="5"] .panel[data-seat-rotation="144"] .history-btn,
+#board[data-player-count="5"] .panel[data-seat-rotation="216"] .history-btn {
+  transform: translate(-50%, -50%)
+    translateY(min(64vmin, calc((50vw - 36px) / 0.588), calc((50vh - 22px) / 0.809)));
 }
 
 /* === Menu pill === */
