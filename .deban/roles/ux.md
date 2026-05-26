@@ -2,7 +2,7 @@
 role: ux
 owner: Gerald
 status: active
-last-updated: 2026-05-23
+last-updated: 2026-05-26
 ---
 
 # User Experience
@@ -22,30 +22,42 @@ Legibility across a table at an angle, tap-target sizing, motion (the floating d
 | 2026-05-23 | v3: Cache-bust "Build" badge inside the settings popover (3 cb-shape glyphs + 8-char token hex). | Per Gerald: corner widget on main view was dev affordance, not part of game UX. Settings is the right home. | [[devops]] |
 | 2026-05-23 | v5: History "…" button at bottom-center of each player's rotated frame, far from the table center. | Per Gerald: must not be tap-by-mistake-able. The +/- zones cluster around the number; placing "…" at the player's perimeter edge keeps it out of normal play. | [[dev]] |
 | 2026-05-23 | v6: Settings close = `×` button at top-right of popover OR tap anywhere outside (full-viewport transparent backdrop). | Per Gerald: must have a clean exit. Backdrop also blocks the zone underneath so life totals don't tick when user taps to close. | [[dev]] |
+| 2026-05-25 | **Ryūshi (Particles) skin** — Sci-fi palette per Gerald: P1 teal / P2 yellow / P3 terminal-green / P4 danger-orange / P5 alert-red on deep-void bg. Numbers traced by Canvas-rendered particle clouds; per-tap burst (radial velocity + alpha-pulse glow); per-digit retargeting so tens doesn't move when ones rolls. | First experimental skin. 1-px grey radial/cross/horizontal player-boundary lines drawn on the canvas (per layout). Player colour stays stable on burst (alpha-pulse, no hue switch). | [[pm]], [[dev]] |
+| 2026-05-25 | **7-Seg (Retro CRT) skin** — Hexagonal-segment VFD aesthetic. Per-player phosphor palette: P1 red / P2 green / P3 white / P4 orange / P5 electric blue (#0ad4ff per Marantz reference). Apollo-style white "hot core" on top of every coloured segment; faint "ghost" stroke on off segments forming the 8-outline. Numbers face each player (seat-rotation respected). | Per Gerald: retro tube-display vibe. Hex polygons with pointed tips give the classic LCD/VFD corner notch; multi-pass shadowBlur gives the bloom. | [[pm]], [[dev]] |
+| 2026-05-25 | **CRT overlay applies only to lit segments**, not the empty bg. Implemented via `body[data-skin="seven-seg"]::after` with `mix-blend-mode: multiply`, BLACK scanlines + aperture + vignette. Anything × black = black (bg untouched); × digit = darker digit, classic stripe pattern. | Gerald's call: CRT pattern over empty space looked wrong. Multiply blend mode is the standard way to gate an overlay on luminance. | [[pm]] |
+| 2026-05-26 | 7-Seg defaults locked in from live ?admin tuning: digitScale 0.55 / segmentThickness 0.18 / digitAspect 1.7 / digitGap 0.25 / glowBlur 25 / ghostAlpha 0.06 / jitter 0.5 / coreWhite 1 / coreThickness 0.7 / scanlines 0.14 / aperture 0 / vignette 0 / flicker 0. | Locked across DEFAULTS, SLIDERS init, AND CSS fallback values so a no-slider load matches a touched-slider load. Net: thicker segments, generous gaps, max hot-core, strong glow, scanlines-only CRT. | [[pm]], [[dev]] |
+| 2026-05-25 | Skin grid layout: 2 columns × N rows (currently 4 skins on 2 rows, 5th wraps to row 3). Settings popover widened 260/360 → 300/420. Reset button label "Reset game" → "Reset Counter". | Per Gerald: pagination was overkill; future skins flow to row 3+. | [[dev]] |
+| 2026-05-25 | "New version available — Refresh" toast at top-center of viewport when SW detects an update. | Replaces silent skipWaiting per [[arch]]. Pill-shaped, transparent backdrop blur, accent-teal Refresh button + × dismiss. Respects safe-area-inset-top for iOS notch. | [[devops]], [[dev]] |
 
 ## Dead Ends
 <!-- APPEND ONLY. Never delete. -->
 | Date | What was tried | Why it failed / was rejected |
 |---|---|---|
 | 2026-05-23 | v1: hint banner positioned bottom-center, full-width-ish. | Overlapped the cb-badge (then at bottom-right corner). cb-badge intercepted the "Got it" dismiss tap. Fixed: anchored hint bottom-left with `max-width: calc(100vw - 160px)`. (cb-badge later moved into settings, but the hint banner positioning stuck.) |
+| 2026-05-25 | Isometric-3D particle numerals as the first experimental view (per pm.md). | Gerald accepted the architectural pushback (camera ambiguity, budget tension, 3D scene-graph cost). Dropped to 2D particles only — captures the entertainment value without the geometry pain. |
+| 2026-05-25 | Original 7-Seg "Hot-core white" defaulted to 0.45 with thickness 0.4. | Looked dim against the bloom. Live ?admin tuning raised to coreWhite=1, coreThickness=0.7 — the Apollo-VFD overexposed-centre look only emerges when the core is bright and fills most of the segment. |
 
 ## Lessons
+- Per-player palettes for canvas-rendered skins SHOULD reuse the mainline `--pN-fg` tokens read via getComputedStyle(panelEl). Defining a parallel "experimental palette" duplicates state and risks drift. — from Ryūshi + 7-Seg shipping on 2026-05-25
+- A CRT/scanline overlay only sells the illusion when it's gated on luminance. Apply it via `mix-blend-mode: multiply` with BLACK scanlines so the empty bg passes through unchanged. — from CRT decision on 2026-05-25
 
 ## Open Questions
 - [ ] **Tap-zone split: 55% / 45%, or invert?** — Still untested. Most life changes are negative; larger − zone might be the right call. Needs real-table playtest. — owner: Gerald — since: 2026-05-23
 - [x] ~~Floating delta indicator placement~~ — Resolved in v1: above the number in the rotated frame, repositioned for radial.
 - [ ] **Numeral font size in 5P** — Currently `clamp(44px, 18vmin, 140px)`. Across-the-table-at-an-angle legibility still untested at real distance. — owner: Gerald — since: 2026-05-23
-- [ ] **Experimental view: isometric camera definition.** — "Each facing its owner" in isometric is ambiguous. Two interpretations: (a) 5 separate isometric viewports per player (each a tilted prism, like the current 2D radial with depth); (b) one shared 3D scene with the numerals rotated to face their respective seats but a fixed bird's-eye camera. (a) preserves the table-around-phone mental model; (b) is more visually striking but harder to read at angle. — owner: Gerald — since: 2026-05-23
-- [ ] **Experimental view: particle-glyph rendering technique.** — (i) outline-trace ~40–60 particles per digit; (ii) signed-distance-field sample over a grid; (iii) keep the digit as flat DOM text and add a burst-only particle layer on delta. (iii) is by far the cheapest; (i)/(ii) are "numbers made of particles" literally. Gerald's wording suggests (i)/(ii); the budget constraint pushes toward (iii). — owner: Gerald (via [[dev]]) — since: 2026-05-23
-- [ ] **Experimental view: accent palette.** — Reuse mainline `--pN-fg` tokens or define a brighter "experimental" palette tuned for dark background + glow? Glow on a dark BG reads differently than the same color on pastel/heroic. — owner: Gerald — since: 2026-05-23
+- [x] ~~Experimental view: isometric camera definition.~~ — Dropped 2026-05-25: Gerald moved to 2D-only.
+- [x] ~~Experimental view: particle-glyph rendering technique.~~ — Resolved 2026-05-25: option (a) outline-sample.
+- [x] ~~Experimental view: accent palette.~~ — Resolved 2026-05-25: reuse mainline `--pN-fg` per skin.
+- [ ] **Marquee experimental view** — Ryūshi (sci-fi particles) and 7-Seg (retro CRT) coexist as user choices. No need to pick one as "the experimental view" — but eventually one may emerge as the default for screenshots / Home Screen install preview. — owner: Gerald — since: 2026-05-26
 
 ## Assumptions
-- [System font stack suffices for `--font-ui`; only display fonts vary per skin] — status: validated — since: 2026-05-23 — pastel uses system stack; cyber uses monospace; heroic uses serif. UI font system-stack everywhere.
+- [System font stack suffices for `--font-ui`; only display fonts vary per skin] — status: validated — since: 2026-05-23 — pastel uses system stack; cyber + 7-seg use monospace; heroic uses serif. UI font system-stack everywhere.
 
 ## Dependencies
 Blocked by:
 Feeds into: [[dev]], [[qa]]
 
 ## Session Log
+- 2026-05-26 — SYNC v8: recorded Ryūshi + 7-Seg skin decisions, CRT-on-digits-only via multiply blend, tuned 7-Seg defaults; 2 new Dead Ends + 2 new Lessons. 3 experimental UX OQs resolved. New OQ: which skin is "the marquee" for install previews.
 - 2026-05-23 — SYNC v6: recorded v2→v6 skin/layout/UX decisions; opened 3 experimental-view UX questions (camera, particle-glyph technique, accent palette).
 - 2026-05-23 — INIT: scope set; tap-zone split, indicator placement, and numeral sizing flagged as open.
