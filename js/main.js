@@ -4,6 +4,7 @@ import { createState, loadState, saveState } from "./state.js";
 import { render, computeRadialClipPaths } from "./render.js";
 import { bindInput } from "./input.js";
 import { applySkin } from "./skins.js";
+import { initPwaInstall } from "./pwa-install.js";
 import { acquire, bindVisibilityReacquire } from "./wakelock.js";
 import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels, SLIDERS as PARTICLE_SLIDERS } from "./particles.js";
 import { mountDevSliders, unmountDevSliders } from "./dev-sliders.js";
@@ -22,6 +23,9 @@ applySkin(state.skin);
 
 // 3. Initial render into #board.
 const root = document.getElementById("board");
+// Capture beforeinstallprompt before first render so the Build section's
+// "Add To Screen" button reflects install availability immediately.
+initPwaInstall();
 render(state, root);
 
 // 4. Save once after load to upgrade any legacy storage shape.

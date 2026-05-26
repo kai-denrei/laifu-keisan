@@ -23,6 +23,8 @@
 //     This matches the convention "+ at panel-top, − at panel-bottom" once
 //     the panel is rotated to face the player.
 
+import { updatePwaUI } from "./pwa-install.js";
+
 // Seat rotation per spec.
 //   2P: south + north
 //   3P RADIAL: P0 south (0°), P1 120° CW from south, P2 240°
@@ -204,6 +206,13 @@ export function renderShell(state, root) {
       <div class="menu-row menu-row-build">
         <span class="menu-label">Build</span>
         <div class="build-badge" data-bind="build-badge" aria-label="Cache-bust build token"></div>
+      </div>
+      <div class="menu-row menu-row-pwa">
+        <div class="pwa-block">
+          <p class="pwa-note">This is a Mobile PWA — you can add it to your home screen and use it offline.</p>
+          <button type="button" class="pwa-install" data-action="pwa-install" hidden>Add&nbsp;To&nbsp;Screen</button>
+          <p class="pwa-hint" hidden></p>
+        </div>
       </div>
       <div class="menu-row menu-row-actions">
         <button type="button" class="menu-reset" data-action="reset-confirm">Reset Counter</button>
@@ -545,6 +554,8 @@ export function renderMenu(state) {
   });
   const stepperVal = root.querySelector('[data-bind="starting-life"]');
   if (stepperVal) stepperVal.textContent = String(state.startingLife);
+  // Reflect PWA install state onto the Build section (re-syncs on rebuild).
+  updatePwaUI();
 }
 
 /**

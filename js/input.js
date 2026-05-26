@@ -18,6 +18,7 @@
 import { applyDelta, undoLast, setPlayerCount, setSkin, setStartingLife, setHistoryEnabled, resetGame, dismissHint, saveState } from "./state.js";
 import { renderPlayer, renderLog, renderShell, renderMenu, render } from "./render.js";
 import { applySkin } from "./skins.js";
+import { triggerInstall, updatePwaUI } from "./pwa-install.js";
 
 const HOLD_DELAY_MS = 500;
 const ACCEL_TIER_1_INTERVAL = 220;
@@ -290,7 +291,14 @@ export function bindInput(root, getState, onChange) {
           popover.hidden = !popover.hidden;
           const backdrop = root.querySelector(".menu-backdrop");
           if (backdrop) backdrop.hidden = popover.hidden;
+          // Re-sync install state each open (standalone / prompt availability
+          // can change after first render).
+          if (!popover.hidden) updatePwaUI();
         }
+        break;
+      }
+      case "pwa-install": {
+        triggerInstall();
         break;
       }
       case "menu-close": {

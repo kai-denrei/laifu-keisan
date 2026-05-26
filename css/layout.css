@@ -355,13 +355,20 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
+/* Centered on the screen. .menu-pill (the positioned ancestor) is itself
+ * centered via translate(-50%,-50%), so anchoring the popover at the pill's
+ * 50%/50% centre point lands it dead-centre regardless of height. max-height
+ * + scroll keeps a tall modal fully reachable on short viewports. */
 .menu-popover {
   position: absolute;
-  top: 56px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   min-width: 300px;
   max-width: min(94vw, 420px);
+  max-height: 90vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--menu-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -506,6 +513,63 @@
 .build-badge-hex {
   margin-left: 4px;
   letter-spacing: 0.04em;
+}
+
+/* === PWA install block (sits under Build) === */
+.menu-row-pwa {
+  /* Full-width stacked block rather than the label/control split. */
+  display: block;
+}
+.pwa-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--menu-bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pwa-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.pwa-install {
+  align-self: stretch;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: var(--button-bg-active);
+  color: var(--panel-bg);
+  border: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.pwa-install[hidden] { display: none; }
+.pwa-install:active {
+  filter: brightness(0.92);
+}
+.pwa-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.pwa-hint[hidden] { display: none; }
+.pwa-share-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1;
+  vertical-align: -2px;
 }
 
 /* === Log popover === */
