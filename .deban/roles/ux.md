@@ -28,6 +28,9 @@ Legibility across a table at an angle, tap-target sizing, motion (the floating d
 | 2026-05-26 | 7-Seg defaults locked in from live ?admin tuning: digitScale 0.55 / segmentThickness 0.18 / digitAspect 1.7 / digitGap 0.25 / glowBlur 25 / ghostAlpha 0.06 / jitter 0.5 / coreWhite 1 / coreThickness 0.7 / scanlines 0.14 / aperture 0 / vignette 0 / flicker 0. | Locked across DEFAULTS, SLIDERS init, AND CSS fallback values so a no-slider load matches a touched-slider load. Net: thicker segments, generous gaps, max hot-core, strong glow, scanlines-only CRT. | [[pm]], [[dev]] |
 | 2026-05-25 | Skin grid layout: 2 columns × N rows (currently 4 skins on 2 rows, 5th wraps to row 3). Settings popover widened 260/360 → 300/420. Reset button label "Reset game" → "Reset Counter". | Per Gerald: pagination was overkill; future skins flow to row 3+. | [[dev]] |
 | 2026-05-25 | "New version available — Refresh" toast at top-center of viewport when SW detects an update. | Replaces silent skipWaiting per [[arch]]. Pill-shaped, transparent backdrop blur, accent-teal Refresh button + × dismiss. Respects safe-area-inset-top for iOS notch. | [[devops]], [[dev]] |
+| 2026-05-26 | v9: History "…" button must stay on-screen for EVERY seat, not just the south one. Now per-seat capped (see [[dev]]); south-seat placement unchanged. | Gerald: "toggling history fails in 3P/5P on mobile — history for several players is off-screen." The v5 "perimeter edge" intent was right; the uniform offset silently made history unreachable for the side seats. | [[dev]] |
+| 2026-05-26 | v9: Settings modal centered on screen (was top-anchored, overflowed the bottom on short phones). | Per Gerald. | [[dev]] |
+| 2026-05-26 | v9: Build section gains a PWA self-description + platform-aware "Add To Screen" — Chrome/Android: real install button; iOS Safari: "tap Share ↑ then Add to Home Screen" hint; already-installed: "installed, works offline ✓". | Per Gerald: "This is a Mobile PWA, you can [Add To Screen] and use it offline." Asked functional-vs-static; Gerald chose functional-where-supported. iOS can't trigger install programmatically (no beforeinstallprompt), so it gets a manual hint instead of a dead button. | [[dev]] |
 
 ## Dead Ends
 <!-- APPEND ONLY. Never delete. -->
@@ -40,6 +43,7 @@ Legibility across a table at an angle, tap-target sizing, motion (the floating d
 ## Lessons
 - Per-player palettes for canvas-rendered skins SHOULD reuse the mainline `--pN-fg` tokens read via getComputedStyle(panelEl). Defining a parallel "experimental palette" duplicates state and risks drift. — from Ryūshi + 7-Seg shipping on 2026-05-25
 - A CRT/scanline overlay only sells the illusion when it's gated on luminance. Apply it via `mix-blend-mode: multiply` with BLACK scanlines so the empty bg passes through unchanged. — from CRT decision on 2026-05-25
+- "Place it at the player's perimeter edge" is a per-seat instruction, not a single measurement — radial seats face different screen edges, so a placement that's at-the-edge for one seat is off-screen for another. Verify the affordance for every seat, not just the one in front of you. — from the off-screen history button on 2026-05-26
 
 ## Open Questions
 - [ ] **Tap-zone split: 55% / 45%, or invert?** — Still untested. Most life changes are negative; larger − zone might be the right call. Needs real-table playtest. — owner: Gerald — since: 2026-05-23
@@ -58,6 +62,7 @@ Blocked by:
 Feeds into: [[dev]], [[qa]]
 
 ## Session Log
+- 2026-05-26 — SYNC v9: history "…" button reachability fixed for 3P/5P side seats; settings modal centered; Build section gains platform-aware PWA "Add To Screen". 3 Decisions, 1 Lesson.
 - 2026-05-26 — SYNC v8: recorded Ryūshi + 7-Seg skin decisions, CRT-on-digits-only via multiply blend, tuned 7-Seg defaults; 2 new Dead Ends + 2 new Lessons. 3 experimental UX OQs resolved. New OQ: which skin is "the marquee" for install previews.
 - 2026-05-23 — SYNC v6: recorded v2→v6 skin/layout/UX decisions; opened 3 experimental-view UX questions (camera, particle-glyph technique, accent palette).
 - 2026-05-23 — INIT: scope set; tap-zone split, indicator placement, and numeral sizing flagged as open.
