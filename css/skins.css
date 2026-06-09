@@ -261,3 +261,68 @@ body[data-skin="seven-seg"]::after {
   background: var(--menu-bg-soft);
   border: 1px solid var(--border);
 }
+
+/* ===== Lixie — edge-lit engraved-acrylic "Lixie Tube" =====
+ * The .life text is kept in the DOM (its bbox + computed font drive the
+ * per-panel layout) but rendered invisible; js/lixie.js draws glowing etched
+ * numeral stacks where the text would be, on a full-viewport canvas at
+ * z-index 4 (above panels, below the menu-pill). The deep #04080c page
+ * background + the canvas's full-frame vignette/dust/scratches make the
+ * numerals read as floating inside a dark glass tube.
+ */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/JetBrainsMono.woff2?v=6a3fdcef") format("woff2");
+}
+body[data-skin="lixie"] {
+  background: #04080c;
+}
+[data-skin="lixie"] .panel {
+  border: 0;
+  background: transparent;
+}
+[data-skin="lixie"] .panel-inner .life {
+  /* Hidden but layout-preserved — lixie.js reads bbox + computed font. */
+  color: transparent;
+  text-shadow: none;
+}
+[data-skin="lixie"] .panel::after {
+  display: none !important;
+}
+[data-skin="lixie"] .menu-pill .menu-toggle {
+  background: var(--menu-bg-soft);
+  border: 1px solid rgba(54, 214, 255, 0.35);
+  color: var(--p1-fg);
+}
+[data-skin="lixie"] .menu-popover {
+  background: var(--menu-bg);
+  border: 1px solid rgba(54, 214, 255, 0.25);
+  color: var(--text);
+  box-shadow: 0 0 24px rgba(54, 214, 255, 0.12);
+}
+[data-skin="lixie"] .menu-label,
+[data-skin="lixie"] .stepper-value,
+[data-skin="lixie"] .build-badge,
+[data-skin="lixie"] .build-badge-hex {
+  color: var(--text);
+}
+[data-skin="lixie"] .menu-choices button,
+[data-skin="lixie"] .stepper button,
+[data-skin="lixie"] .skin-grid button {
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+[data-skin="lixie"] .menu-choices button[data-active="1"],
+[data-skin="lixie"] .skin-grid button[data-active="1"] {
+  background: var(--p1-fg);
+  color: var(--bg);
+  font-weight: 700;
+}
+[data-skin="lixie"] .build-badge {
+  background: var(--menu-bg-soft);
+  border: 1px solid var(--border);
+}

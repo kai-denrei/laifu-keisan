@@ -210,3 +210,40 @@
   --p5-fg: #0ad4ff;              /* P5 electric blue — VFD cyan-blue */
 }
 
+/* ===== LIXIE — edge-lit engraved-acrylic "Lixie Tube" =====
+ * Numerals float in a deep dark glass tube; js/lixie.js draws the glowing
+ * etched stacks. Tokens carry the dark tube background + per-player emissive
+ * hues (cool, glassy, jewel-toned) that scatter well on the dark surface.
+ * P1 is the signature Lixie cyan from lixie-params.json.
+ */
+[data-skin="lixie"] {
+  --bg: #04080c;                 /* deep acrylic-tube black-blue */
+  --panel-bg: transparent;
+  --panel-bg-alt: transparent;
+  --text: #cfe6f2;
+  --text-dim: #5e7686;
+  --accent-pos: #36d6ff;
+  --accent-neg: #ff5d8f;
+  --border: rgba(80, 120, 150, 0.20);
+  --font-display: var(--font-mono);
+  --font-ui: var(--font-mono);
+  --shadow-ink: none;
+  --menu-bg: #07111a;
+  --menu-bg-soft: #0c1a26;
+  --modal-overlay: rgba(4, 8, 12, 0.88);
+  --button-bg: #0c1a26;
+  --button-bg-active: #36d6ff;
+
+  /* Per-player emissive acrylic hues */
+  --p1-bg: transparent;
+  --p1-fg: #36d6ff;              /* signature cyan */
+  --p2-bg: transparent;
+  --p2-fg: #2cff9e;              /* aqua-mint */
+  --p3-bg: transparent;
+  --p3-fg: #ff9e3d;              /* amberglass */
+  --p4-bg: transparent;
+  --p4-fg: #ff5d8f;              /* rose */
+  --p5-bg: transparent;
+  --p5-fg: #b48cff;              /* violet */
+}
+

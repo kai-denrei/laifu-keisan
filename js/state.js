@@ -31,7 +31,7 @@ const DEFAULTS = Object.freeze({
   historyEnabled: false,
 });
 
-const SKINS = ["pastel", "cyberpunk", "heroic-fantasy", "particles", "seven-seg"];
+const SKINS = ["pastel", "cyberpunk", "heroic-fantasy", "particles", "seven-seg", "lixie"];
 
 function makePlayer(id, startingLife) {
   const p = {

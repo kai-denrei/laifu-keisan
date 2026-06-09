@@ -1,4 +1,4 @@
-const CB_TOKEN = "bd585b5d";
+const CB_TOKEN = "6a3fdcef";
 const CACHE_NAME = `lifecounter-${CB_TOKEN}`;
 
 const BADGE_CELLS = [0, 1, 2].map(i =>
@@ -31,6 +31,8 @@ const ASSETS_BARE = [
   "./js/particles.js",
   "./js/dev-sliders.js",
   "./js/sevenseg.js",
+  "./js/lixie.js",
+  "./fonts/JetBrainsMono.woff2",
   "./css/tokens.css",
   "./css/base.css",
   "./css/layout.css",

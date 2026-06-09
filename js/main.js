@@ -9,6 +9,7 @@ import { acquire, bindVisibilityReacquire } from "./wakelock.js";
 import { startParticles, stopParticles, updateConfig as updateParticleConfig, getFps as getParticleFps, refreshPanels as refreshParticlePanels, SLIDERS as PARTICLE_SLIDERS } from "./particles.js";
 import { mountDevSliders, unmountDevSliders } from "./dev-sliders.js";
 import { startSevenSeg, stopSevenSeg, updateConfig as updateSevenSegConfig, getFps as getSevenSegFps, refreshPanels as refreshSevenSegPanels, SLIDERS as SEVENSEG_SLIDERS } from "./sevenseg.js";
+import { startLixie, stopLixie, updateConfig as updateLixieConfig, getFps as getLixieFps, refreshPanels as refreshLixiePanels, SLIDERS as LIXIE_SLIDERS } from "./lixie.js";
 
 // Dev sliders are hidden behind `?admin` to keep them off prod for normal
 // users while staying one URL away for tuning. Presence-only flag — value
@@ -76,6 +77,7 @@ function syncSkinRenderer() {
   // Particles (Ryūshi)
   if (skin === "particles") {
     stopSevenSeg();
+    stopLixie();
     startParticles();
     if (IS_ADMIN) {
       mountDevSliders({
@@ -88,6 +90,7 @@ function syncSkinRenderer() {
   // 7-segment (Retro)
   } else if (skin === "seven-seg") {
     stopParticles();
+    stopLixie();
     startSevenSeg();
     if (IS_ADMIN) {
       mountDevSliders({
@@ -97,10 +100,24 @@ function syncSkinRenderer() {
         getFps: getSevenSegFps,
       });
     }
+  // Lixie (edge-lit acrylic tube)
+  } else if (skin === "lixie") {
+    stopParticles();
+    stopSevenSeg();
+    startLixie();
+    if (IS_ADMIN) {
+      mountDevSliders({
+        title: "Lixie · dev",
+        sliders: LIXIE_SLIDERS,
+        onChange: (key, value) => updateLixieConfig({ [key]: value }),
+        getFps: getLixieFps,
+      });
+    }
   // Static skins
   } else {
     stopParticles();
     stopSevenSeg();
+    stopLixie();
   }
 }
 syncSkinRenderer();
@@ -116,6 +133,8 @@ document.addEventListener("layout-change", () => {
     requestAnimationFrame(() => refreshParticlePanels());
   } else if (skin === "seven-seg") {
     requestAnimationFrame(() => refreshSevenSegPanels());
+  } else if (skin === "lixie") {
+    requestAnimationFrame(() => refreshLixiePanels());
   }
 });
 
